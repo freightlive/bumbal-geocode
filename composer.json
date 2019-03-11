@@ -1,0 +1,19 @@
+{
+    "name": "bumbal/bumbal-geocode-php",
+    "description": "geocoding addresses to lon/lat",
+    "keywords": [
+        "geocoding",
+        "php"
+    ],
+    "homepage": "http://www.bumbal.eu",
+    "license": "proprietary",
+    "require": {
+        "php": ">=7.2",
+        "ext-curl": "*",
+        "ext-json": "*",
+        "ext-mbstring": "*"
+    },
+    "autoload": {
+        "psr-4": { "BumbalGeocode\\" : "src/" }
+    }
+}
