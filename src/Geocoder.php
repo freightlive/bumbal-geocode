@@ -5,8 +5,14 @@ namespace BumbalGeocode;
 
 class Geocoder
 {
-    public function run(){
-        echo 'hello Geocoder world';
-        die();
+
+    //public function __construct(Provider[] ['BumbalGeocode\Providers\Google', 'osm']){
+
+    //}
+
+
+
+    public function run(Address $address){
+
     }
 }
