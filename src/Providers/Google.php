@@ -58,7 +58,8 @@ class Google implements GeoProvider
 
     private function getAddressString(Address $address){
 
-        $address_data = json_decode(json_encode($address), true);
+        $address_data = $address->toArray();
+
         $minimum_needed_fields = [
             ['iso_country'],
             ['city']

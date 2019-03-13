@@ -3,16 +3,18 @@
 namespace BumbalGeocode;
 
 
-class Geocoder
-{
+class Geocoder {
 
-    //public function __construct(Provider[] ['BumbalGeocode\Providers\Google', 'osm']){
+    protected $providers;
 
-    //}
+    public function __construct(GeoProviderList $providers){
+        $this->providers = $providers;
+    }
 
+    public function getLatLonFromAddress(Address $address){
+        foreach($this->providers as $provider){
+            $result = $provider->getLatLonFromAddress($address);
 
-
-    public function run(Address $address){
-
+        }
     }
 }

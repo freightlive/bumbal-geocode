@@ -4,22 +4,26 @@ namespace BumbalGeocode;
 
 class Address {
 
-    public $street;
-    public $house_nr;
-    public $zipcode;
-    public $city;
-    public $iso_country;
+    protected $street;
+    protected $house_nr;
+    protected $zipcode;
+    protected $city;
+    protected $iso_country;
 
     /**
      * Address constructor.
-     * @param array $address_data
+     * @param array $data
      */
-    public function __construct(array $address_data = []){
-        foreach($address_data as $key => $value){
+    public function __construct(array $data = []){
+        foreach($data as $key => $value){
             if(property_exists($this, $key)){
                 $this->$key = $value;
             }
         }
+    }
+
+    public function toArray(){
+        return get_object_vars($this);
     }
 
     /**
