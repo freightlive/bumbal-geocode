@@ -1,15 +1,10 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: Jurgen
- * Date: 13/03/2019
- * Time: 10:58
- */
 
 namespace BumbalGeocode;
 
 
 class LatLngResult {
+
 
     /**
      * @var float
@@ -39,6 +34,11 @@ class LatLngResult {
      * @var string
      */
     protected $error_message;
+
+    /**
+     * @var string
+     */
+    protected $provider_name;
 
     /**
      * LatLngResult constructor.
@@ -120,5 +120,19 @@ class LatLngResult {
      */
     public function getErrorMessage(){
         return $this->error_message;
+    }
+
+    /**
+     * @param string $provider_name
+     */
+    public function setProviderName(string $provider_name){
+        $this->provider_name = $provider_name;
+    }
+
+    /**
+     * @return string
+     */
+    public function getProviderName(){
+        return $this->provider_name;
     }
 }

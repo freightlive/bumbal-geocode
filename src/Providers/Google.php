@@ -30,6 +30,8 @@ class Google implements GeoProvider
     const GOOGLE_LOCATION_TYPE_GEOMETRIC_CENTER = 'GEOMETRIC_CENTER';
     const GOOGLE_LOCATION_TYPE_APPROXIMATE = 'APPROXIMATE';
 
+    const PROVIDER_NAME = 'google_maps';
+
     private $api_key;
 
     public function __construct($api_key) {
@@ -45,7 +47,7 @@ class Google implements GeoProvider
         $address_string = '';
 
         try {
-            $address_string = $this->getAddressString($address);
+            $address_string = $address->getAddressString();
             $google_result = $this->request($address_string);
             $this->validateResult($google_result);
             $result = $this->analyseResult($google_result);
@@ -53,6 +55,7 @@ class Google implements GeoProvider
         } catch(\Exception $e){
             $result = new LatLngResult(
                 [
+                    'provider_name' => self::PROVIDER_NAME,
                     'latitude' => null,
                     'longitude' => null,
                     'precision' => 0.0,
@@ -83,27 +86,28 @@ class Google implements GeoProvider
     }
 
     /**
-     * @param array $google_result
+     * @param array $data
      * @return LatLngResult
      * @throws \Exception
      */
-    private function analyseResult(array $google_result){
+    private function analyseResult(array $data){
         $result = new LatLngResult();
+        $result->setProviderName(self::PROVIDER_NAME);
 
-        if(empty($google_result['results'][0]['geometry']['location'])) {
-            $error_message = empty($address_info['error_message']) ?  'Unknown' : $address_info['error_message'];
+        if(empty($data['results'][0]['geometry']['location'])) {
+            $error_message = empty($data['error_message']) ?  'Unknown' : $data['error_message'];
             throw new \Exception('Google maps API returned no locations due to: [' . $error_message . ']');
         }
 
-        $result->setLatitude($google_result['results'][0]['geometry']['location']['lat']);
-        $result->setLongitude($google_result['results'][0]['geometry']['location']['lng']);
+        $result->setLatitude($data['results'][0]['geometry']['location']['lat']);
+        $result->setLongitude($data['results'][0]['geometry']['location']['lng']);
 
 
         /**
          * @todo tweak code below to find acceptable precision values for use within Bumbal
          */
-        $google_result_types = $google_result['results'][0]['types'];
-        $google_location_type = $google_result['results'][0]['geometry']['location_type'];
+        $google_result_types = $data['results'][0]['types'];
+        $google_location_type = $data['results'][0]['geometry']['location_type'];
         $valid_result_types = array_intersect(array_keys(self::VALID_GOOGLE_RESULT_TYPES), $google_result_types);
         if(empty($valid_result_types)){
             throw new \Exception("Google maps API didn't return a valid result type (".implode(',', $google_result_types).")");
@@ -136,7 +140,7 @@ class Google implements GeoProvider
      * @return array mixed
      * @throws \Exception
      */
-    private function request(string $address_string){
+    private function request(string $address_string) {
         $url = str_replace(['{{address}}', '{{apikey}}'], [urlencode($address_string), $this->api_key], self::URL);
 
         $channel = curl_init();
@@ -153,60 +157,11 @@ class Google implements GeoProvider
 
         $response = curl_exec($channel);
 
-        if(curl_errno($channel)) {
+        if (curl_errno($channel)) {
             throw new \Exception('Curl returned error code ' . curl_errno($channel));
         }
 
         return json_decode($response, TRUE);
     }
-
-    /**
-     * @param Address $address
-     * @return string
-     * @throws \Exception
-     */
-    private function getAddressString(Address $address){
-
-        $address_data = $address->toArray();
-
-        $minimum_needed_fields = [
-            ['iso_country'],
-            ['city']
-        ];
-
-        $filtered_address_data = array_filter($address_data);
-
-        $missing_fields = [];
-        foreach($minimum_needed_fields as $fields) {
-            if(!array_intersect($fields, array_keys($filtered_address_data))) {
-                $missing_fields[] = implode(' or ', $fields);
-            }
-        }
-
-        if(!empty($missing_fields)) {
-            throw new \Exception('Missing fields in Address ' . implode(', ', $missing_fields));
-        }
-
-        $address_array = [
-            [
-                empty($address_data['street'])?'':$address_data['street'],
-                empty($address_data['house_nr'])?'':$address_data['house_nr']
-            ],
-            [
-                empty($address_data['zipcode'])?'':$address_data['zipcode'],
-                empty($address_data['city'])?'':$address_data['city'],
-                empty($address_data['iso_country'])?'':$address_data['iso_country']
-            ],
-        ];
-
-        foreach($address_array as $key => $value) {
-            $value = array_filter($value);
-            $address_array[$key] = implode(' ',$value);
-        }
-
-        $address_array = array_filter($address_array);
-        return implode(', ', $address_array);
-    }
-
 
 }
