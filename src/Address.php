@@ -4,10 +4,29 @@ namespace BumbalGeocode;
 
 class Address {
 
+    /**
+     * @var string
+     */
     protected $street;
+
+    /**
+     * @var string
+     */
     protected $house_nr;
+
+    /**
+     * @var string
+     */
     protected $zipcode;
+
+    /**
+     * @var string
+     */
     protected $city;
+
+    /**
+     * @var string
+     */
     protected $iso_country;
 
     /**

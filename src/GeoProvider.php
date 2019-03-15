@@ -11,5 +11,5 @@ interface GeoProvider {
      *
      * @throws \Exception
      */
-    public function getLatLonFromAddress(Address $address);
+    public function getLatLngResultFromAddress(Address $address);
 }

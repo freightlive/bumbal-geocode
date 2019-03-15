@@ -11,9 +11,9 @@ class Geocoder {
         $this->providers = $providers;
     }
 
-    public function getLatLonFromAddress(Address $address){
+    public function getLatLngResultFromAddress(Address $address){
         foreach($this->providers as $provider){
-            $result = $provider->getLatLonFromAddress($address);
+            $result = $provider->getLatLngResultFromAddress($address);
 
         }
     }

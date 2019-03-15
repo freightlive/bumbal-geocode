@@ -9,14 +9,39 @@
 namespace BumbalGeocode;
 
 
-class LatLonResult {
-
-    protected $latitude;
-    protected $longitude;
-    protected $precision;
+class LatLngResult {
 
     /**
-     * LatLonResult constructor.
+     * @var float
+     */
+    protected $latitude;
+
+    /**
+     * @var float
+     */
+    protected $longitude;
+
+
+    /**
+     * ranges from:
+     * not found -> 0
+     * found -> (0..1]
+     * @var float
+     */
+    protected $precision = 0.0;
+
+    /**
+     * @var bool
+     */
+    protected $valid = FALSE;
+
+    /**
+     * @var string
+     */
+    protected $error_message;
+
+    /**
+     * LatLngResult constructor.
      * @param array $data
      */
     public function __construct(array $data = []){
@@ -67,5 +92,33 @@ class LatLonResult {
      */
     public function getPrecision(){
         return $this->precision;
+    }
+
+    /**
+     * @param bool $valid
+     */
+    public function setValid(bool $valid){
+        $this->valid = $valid;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isValid(){
+        return $this->valid === TRUE;
+    }
+
+    /**
+     * @param string $error_message
+     */
+    public function setErrorMessage(string $error_message){
+        $this->error_message = $error_message;
+    }
+
+    /**
+     * @return string
+     */
+    public function getErrorMessage(){
+        return $this->error_message;
     }
 }
