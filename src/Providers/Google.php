@@ -14,6 +14,10 @@ class Google implements GeoProvider
     const GOOGLE_RESULT_TYPE_LOCALITY = 'locality';
     const GOOGLE_RESULT_TYPE_SUBLOCALITY = 'sublocality';
     const GOOGLE_RESULT_TYPE_POSTAL_CODE = 'postal_code';
+
+    /**
+     * @todo tweak values
+     */
     const VALID_GOOGLE_RESULT_TYPES = [
         self::GOOGLE_RESULT_TYPE_STREET_ADDRESS => 1.0,
         self::GOOGLE_RESULT_TYPE_ROUTE => 0.9,
