@@ -3,16 +3,22 @@
 namespace BumbalGeocode;
 
 
-class Geocoder
-{
+class Geocoder {
 
-    //public function __construct(Provider[] ['BumbalGeocode\Providers\Google', 'osm']){
+    protected $providers;
 
-    //}
+    public function __construct(GeoProviderList $providers){
+        $this->providers = $providers;
+    }
 
+    public function getLatLngResultFromAddress(Address $address, float $precision){
+        foreach($this->providers as $provider){
+            $result = $provider->getLatLngResultFromAddress($address);
+            if($result->isValid() && $result->getPrecision() >= $precision){
+                return $result;
+            }
+        }
 
-
-    public function run(Address $address){
-
+        return FALSE;
     }
 }

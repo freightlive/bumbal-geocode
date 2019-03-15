@@ -3,7 +3,13 @@
 namespace BumbalGeocode;
 
 
-interface GeoProvider
-{
-    public function getLatLonFromAddress(Address $address);
+interface GeoProvider {
+
+    /**
+     * @param Address $address
+     * @return LatLonResult
+     *
+     * @throws \Exception
+     */
+    public function getLatLngResultFromAddress(Address $address);
 }
