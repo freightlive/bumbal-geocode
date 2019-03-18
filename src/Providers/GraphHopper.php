@@ -43,7 +43,6 @@ class GraphHopper implements GeoProvider {
                     'latitude' => null,
                     'longitude' => null,
                     'precision' => 0.0,
-                    'valid' => FALSE,
                     'error_message' => $e->getMessage()." ($address_string)"
                 ]
             );
@@ -79,7 +78,6 @@ class GraphHopper implements GeoProvider {
         $result->setLatitude($data['hits'][0]['point']['lat']);
         $result->setLongitude($data['hits'][0]['point']['lng']);
         $result->setPrecision(1.0);
-        $result->setValid(TRUE);
         return $result;
     }
 

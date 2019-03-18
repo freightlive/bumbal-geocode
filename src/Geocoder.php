@@ -23,7 +23,7 @@ class Geocoder {
     public function getLatLngResultFromAddress(Address $address, float $precision){
         foreach($this->providers as $provider){
             $result = $provider->getLatLngResultFromAddress($address);
-            if($result->isValid() && $result->getPrecision() >= $precision){
+            if($result->getPrecision() >= $precision){
                 return $result;
             }
         }

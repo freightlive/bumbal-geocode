@@ -52,14 +52,13 @@ class Google implements GeoProvider
             $this->validateResult($google_result);
             $result = $this->analyseResult($google_result);
 
-        } catch(\Exception $e){
+        } catch(\Exception $e) {
             $result = new LatLngResult(
                 [
                     'provider_name' => self::PROVIDER_NAME,
                     'latitude' => null,
                     'longitude' => null,
                     'precision' => 0.0,
-                    'valid' => FALSE,
                     'error_message' => $e->getMessage()." ($address_string)"
                 ]
             );
@@ -79,8 +78,8 @@ class Google implements GeoProvider
             throw new \Exception('Google maps API returned Status Code: '.$data['status']);
         }
 
-        if(empty($data['results'][0])){
-            throw new \Exception('Google maps API returned no results');
+        if(!empty($data['error_message'])){
+            throw new \Exception('Google maps API returned Error Message: '.$data['error_message']);
         }
         return TRUE;
     }
@@ -93,12 +92,6 @@ class Google implements GeoProvider
     private function analyseResult(array $data){
         $result = new LatLngResult();
         $result->setProviderName(self::PROVIDER_NAME);
-
-        if(empty($data['results'][0]['geometry']['location'])) {
-            $error_message = empty($data['error_message']) ?  'Unknown' : $data['error_message'];
-            throw new \Exception('Google maps API returned no locations due to: [' . $error_message . ']');
-        }
-
         $result->setLatitude($data['results'][0]['geometry']['location']['lat']);
         $result->setLongitude($data['results'][0]['geometry']['location']['lng']);
 
@@ -112,7 +105,6 @@ class Google implements GeoProvider
         if(empty($valid_result_types)){
             throw new \Exception("Google maps API didn't return a valid result type (".implode(',', $google_result_types).")");
         } else {
-            $result->setValid(TRUE);
 
             $precision_multiplier = max(array_intersect_key(self::VALID_GOOGLE_RESULT_TYPES, array_flip($valid_result_types)));
             switch($google_location_type){
@@ -149,10 +141,6 @@ class Google implements GeoProvider
         curl_setopt($channel, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($channel, CURLOPT_HEADER, false);
         curl_setopt($channel, CURLOPT_POST, false);
-        //curl_setopt($channel, CURLOPT_REFERER, 'http://'.$this->getService('\FreightLive\Configuration')->getParam('domain').'.freightlive.eu');
-        curl_setopt($channel, CURLOPT_HTTPHEADER, [
-            'Content-Type: application/json',
-        ]);
         curl_setopt($channel, CURLOPT_SSL_VERIFYPEER, false);
 
         $response = curl_exec($channel);

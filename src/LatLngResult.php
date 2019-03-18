@@ -5,7 +5,6 @@ namespace BumbalGeocode;
 
 class LatLngResult {
 
-
     /**
      * @var float
      */
@@ -24,11 +23,6 @@ class LatLngResult {
      * @var float
      */
     protected $precision = 0.0;
-
-    /**
-     * @var bool
-     */
-    protected $valid = FALSE;
 
     /**
      * @var string
@@ -92,20 +86,6 @@ class LatLngResult {
      */
     public function getPrecision(){
         return $this->precision;
-    }
-
-    /**
-     * @param bool $valid
-     */
-    public function setValid(bool $valid){
-        $this->valid = $valid;
-    }
-
-    /**
-     * @return bool
-     */
-    public function isValid(){
-        return $this->valid === TRUE;
     }
 
     /**
