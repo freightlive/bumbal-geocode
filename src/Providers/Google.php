@@ -3,8 +3,10 @@
 namespace BumbalGeocode\Providers;
 
 use BumbalGeocode\GeoProvider;
-use BumbalGeocode\Address;
-use BumbalGeocode\LatLngResult;
+use BumbalGeocode\Model\Address;
+use BumbalGeocode\Model\LatLngResult;
+use BumbalGeocode\Model\LatLngResultList;
+use BumbalGeocode\Model\GeoProviderOptions;
 
 class Google implements GeoProvider
 {
@@ -33,36 +35,60 @@ class Google implements GeoProvider
     const PROVIDER_NAME = 'google_maps';
 
     private $api_key;
+    private $options;
 
-    public function __construct($api_key) {
+    /**
+     * Google constructor.
+     * @param string $api_key
+     * @param GeoProviderOptions $options
+     */
+    public function __construct(string $api_key, GeoProviderOptions $options = NULL) {
         $this->api_key = $api_key;
+        $this->options = ($options ? $options : new GeoProviderOptions());
     }
 
     /**
      * @param Address $address
-     * @return LatLngResult
-      */
-    public function getLatLngResultFromAddress(Address $address){
-        $result = null;
+     * @param float $precision
+     * @return LatLngResultList
+     */
+    public function getLatLngResultListFromAddress(Address $address, float $precision){
+        $result = new LatLngResultList();
         $address_string = '';
 
         try {
             $address_string = $address->getAddressString();
+
+            if($this->options->log_debug){
+                $result->setLogMessage('Google Maps API provider Geocoding invoked for address '.$address_string.' with precision '.$precision);
+            }
+
             $google_result = $this->request($address_string);
             $this->validateResult($google_result);
-            $result = $this->analyseResult($google_result);
 
+            if($this->options->log_debug){
+                $result->setLogMessage('Google Maps API found '.count($google_result['results']).' result(s) for address '.$address_string);
+                $result->setLogMessage('Google Maps API result: '.json_encode($google_result['results']));
+            }
+
+            foreach($google_result['results'] as $single_google_result){
+                $single_result = $this->analyseResult($single_google_result);
+                if($single_result->getPrecision() >= $precision){
+                    $result->setLatLngResult($single_result);
+                }
+            }
+
+            if($this->options->log_debug){
+                $result->setLogMessage('Google Maps provider kept '.count($result).' result(s) for address '.$address_string.' with precision '.$precision);
+            }
         } catch(\Exception $e){
-            $result = new LatLngResult(
-                [
-                    'provider_name' => self::PROVIDER_NAME,
-                    'latitude' => null,
-                    'longitude' => null,
-                    'precision' => 0.0,
-                    'valid' => FALSE,
-                    'error_message' => $e->getMessage()." ($address_string)"
-                ]
-            );
+            if($this->options->log_errors) {
+                $result->setError($e->getMessage() .(!empty($address_string) ? " ($address_string)" : ''));
+            }
+
+            if($this->options->log_debug){
+                $result->setLogMessage('Error: '.$e->getMessage() .(!empty($address_string) ? " ($address_string)" : ''));
+            }
         }
 
         return $result;
@@ -79,8 +105,8 @@ class Google implements GeoProvider
             throw new \Exception('Google maps API returned Status Code: '.$data['status']);
         }
 
-        if(empty($data['results'][0])){
-            throw new \Exception('Google maps API returned no results');
+        if(!empty($data['error_message'])){
+            throw new \Exception('Google maps API returned Error Message: '.$data['error_message']);
         }
         return TRUE;
     }
@@ -93,26 +119,19 @@ class Google implements GeoProvider
     private function analyseResult(array $data){
         $result = new LatLngResult();
         $result->setProviderName(self::PROVIDER_NAME);
-
-        if(empty($data['results'][0]['geometry']['location'])) {
-            $error_message = empty($data['error_message']) ?  'Unknown' : $data['error_message'];
-            throw new \Exception('Google maps API returned no locations due to: [' . $error_message . ']');
-        }
-
-        $result->setLatitude($data['results'][0]['geometry']['location']['lat']);
-        $result->setLongitude($data['results'][0]['geometry']['location']['lng']);
+        $result->setLatitude($data['geometry']['location']['lat']);
+        $result->setLongitude($data['geometry']['location']['lng']);
 
 
         /**
          * @todo tweak code below to find acceptable precision values for use within Bumbal
          */
-        $google_result_types = $data['results'][0]['types'];
-        $google_location_type = $data['results'][0]['geometry']['location_type'];
+        $google_result_types = $data['types'];
+        $google_location_type = $data['geometry']['location_type'];
         $valid_result_types = array_intersect(array_keys(self::VALID_GOOGLE_RESULT_TYPES), $google_result_types);
         if(empty($valid_result_types)){
-            throw new \Exception("Google maps API didn't return a valid result type (".implode(',', $google_result_types).")");
+            $result->setPrecision(0.0);
         } else {
-            $result->setValid(TRUE);
 
             $precision_multiplier = max(array_intersect_key(self::VALID_GOOGLE_RESULT_TYPES, array_flip($valid_result_types)));
             switch($google_location_type){
@@ -149,16 +168,12 @@ class Google implements GeoProvider
         curl_setopt($channel, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($channel, CURLOPT_HEADER, false);
         curl_setopt($channel, CURLOPT_POST, false);
-        //curl_setopt($channel, CURLOPT_REFERER, 'http://'.$this->getService('\FreightLive\Configuration')->getParam('domain').'.freightlive.eu');
-        curl_setopt($channel, CURLOPT_HTTPHEADER, [
-            'Content-Type: application/json',
-        ]);
         curl_setopt($channel, CURLOPT_SSL_VERIFYPEER, false);
 
         $response = curl_exec($channel);
 
         if (curl_errno($channel)) {
-            throw new \Exception('Curl returned error code ' . curl_errno($channel));
+            throw new \Exception('Google maps API request failed. Curl returned error code ' . curl_errno($channel));
         }
 
         return json_decode($response, TRUE);

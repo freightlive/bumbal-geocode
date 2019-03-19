@@ -1,6 +1,6 @@
 <?php
 
-namespace BumbalGeocode;
+namespace BumbalGeocode\Model;
 
 class Address {
 
