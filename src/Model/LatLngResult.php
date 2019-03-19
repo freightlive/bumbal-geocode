@@ -1,6 +1,6 @@
 <?php
 
-namespace BumbalGeocode;
+namespace BumbalGeocode\Model;
 
 
 class LatLngResult {
@@ -23,11 +23,6 @@ class LatLngResult {
      * @var float
      */
     protected $precision = 0.0;
-
-    /**
-     * @var string
-     */
-    protected $error_message;
 
     /**
      * @var string
@@ -86,20 +81,6 @@ class LatLngResult {
      */
     public function getPrecision(){
         return $this->precision;
-    }
-
-    /**
-     * @param string $error_message
-     */
-    public function setErrorMessage(string $error_message){
-        $this->error_message = $error_message;
-    }
-
-    /**
-     * @return string
-     */
-    public function getErrorMessage(){
-        return $this->error_message;
     }
 
     /**

@@ -2,13 +2,15 @@
 
 namespace BumbalGeocode;
 
+use BumbalGeocode\Model\Address;
+use BumbalGeocode\Model\LatLngResultList;
 
 interface GeoProvider {
 
     /**
      * @param Address $address
-     * @return LatLonResult
-     * @throws \Exception
+     * @param float $precision
+     * @return LatLngResultList
      */
-    public function getLatLngResultFromAddress(Address $address);
+    public function getLatLngResultListFromAddress(Address $address, float $precision);
 }

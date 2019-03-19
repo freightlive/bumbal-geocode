@@ -3,8 +3,10 @@
 namespace BumbalGeocode\Providers;
 
 use BumbalGeocode\GeoProvider;
-use BumbalGeocode\Address;
-use BumbalGeocode\LatLngResult;
+use BumbalGeocode\Model\Address;
+use BumbalGeocode\Model\LatLngResult;
+use BumbalGeocode\Model\LatLngResultList;
+use BumbalGeocode\Model\GeoProviderOptions;
 
 
 class GraphHopper implements GeoProvider {
@@ -17,35 +19,61 @@ class GraphHopper implements GeoProvider {
     const PROVIDER_NAME = 'graphhopper_osm';
 
     private $api_key;
+    private $options;
 
-    public function __construct($api_key) {
+    /**
+     * Google constructor.
+     * @param string $api_key
+     * @param GeoProviderOptions $options
+     */
+    public function __construct(string $api_key, GeoProviderOptions $options = NULL) {
         $this->api_key = $api_key;
+        $this->options = ($options ? $options : new GeoProviderOptions());
     }
 
     /**
      * @param Address $address
-     * @return LatLngResult
+     * @param float $precision
+     * @return LatLngResultList
      */
-    public function getLatLngResultFromAddress(Address $address){
-        $result = null;
+    public function getLatLngResultListFromAddress(Address $address, float $precision){
+        $result = new LatLngResultList();
         $address_string = '';
 
         try {
             $address_string = $address->getAddressString();
+
+            if($this->options->log_debug){
+                $result->setLogMessage('GraphHopper OSM provider Geocoding invoked for address '.$address_string.' with precision '.$precision);
+            }
+
             $graphhopper_result = $this->request($address_string);
             $this->validateResult($graphhopper_result);
-            $result = $this->analyseResult($graphhopper_result);
+
+            if($this->options->log_debug){
+                $result->setLogMessage('GraphHopper OSM API found '.count($graphhopper_result['hits']).' result(s) for address '.$address_string);
+                $result->setLogMessage('GraphHopper OSM result: '.json_encode($graphhopper_result['hits']));
+            }
+
+            foreach($graphhopper_result['hits'] as $single_graphhopper_result) {
+                $single_result = $this->analyseResult($single_graphhopper_result);
+                if($single_result->getPrecision() >= $precision){
+                    $result->setLatLngResult($single_result);
+                }
+            }
+
+            if($this->options->log_debug){
+                $result->setLogMessage('GraphHopper OSM provider kept '.count($result).' result(s) for address '.$address_string.' with precision '.$precision);
+            }
 
         } catch(\Exception $e){
-            $result = new LatLngResult(
-                [
-                    'provider_name' => self::PROVIDER_NAME,
-                    'latitude' => null,
-                    'longitude' => null,
-                    'precision' => 0.0,
-                    'error_message' => $e->getMessage()." ($address_string)"
-                ]
-            );
+            if($this->options->log_errors) {
+                $result->setError($e->getMessage() .(!empty($address_string) ? " ($address_string)" : ''));
+            }
+
+            if($this->options->log_debug){
+                $result->setLogMessage('Error: '.$e->getMessage() .(!empty($address_string) ? " ($address_string)" : ''));
+            }
         }
 
         return $result;
@@ -57,9 +85,9 @@ class GraphHopper implements GeoProvider {
      * @throws \Exception
      */
     private function validateResult(array $data){
-        if(empty($data['hits'][0]['point'])){
+        /*if(empty($data['hits'])){
             throw new \Exception('GraphHopper API did not return a result');
-        }
+        }*/
         return TRUE;
     }
 
@@ -70,14 +98,17 @@ class GraphHopper implements GeoProvider {
      */
     private function analyseResult(array $data){
 
-        if($data['hits'][0]['osm_key'] != self::OSM_KEY_PLACE || $data['hits'][0]['osm_value'] != self::OSM_VALUE_HOUSE){
-            throw new \Exception('GraphHopper API did not return a street address');
-        }
         $result = new LatLngResult();
+        if($data['osm_key'] != self::OSM_KEY_PLACE || $data['osm_value'] != self::OSM_VALUE_HOUSE){
+            $result->setPrecision(0.0);
+        } else {
+            $result->setPrecision(1.0);
+        }
+
         $result->setProviderName(self::PROVIDER_NAME);
-        $result->setLatitude($data['hits'][0]['point']['lat']);
-        $result->setLongitude($data['hits'][0]['point']['lng']);
-        $result->setPrecision(1.0);
+        $result->setLatitude($data['point']['lat']);
+        $result->setLongitude($data['point']['lng']);
+
         return $result;
     }
 
@@ -95,16 +126,12 @@ class GraphHopper implements GeoProvider {
         curl_setopt($channel, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($channel, CURLOPT_HEADER, false);
         curl_setopt($channel, CURLOPT_POST, false);
-        //curl_setopt($channel, CURLOPT_REFERER, 'http://'.$this->getService('\FreightLive\Configuration')->getParam('domain').'.freightlive.eu');
-        curl_setopt($channel, CURLOPT_HTTPHEADER, [
-            'Content-Type: application/json',
-        ]);
         curl_setopt($channel, CURLOPT_SSL_VERIFYPEER, false);
 
         $response = curl_exec($channel);
 
         if (curl_errno($channel)) {
-            throw new \Exception('Curl returned error code ' . curl_errno($channel));
+            throw new \Exception('GraphHopper API request failed. Curl returned error code ' . curl_errno($channel));
         }
 
         return json_decode($response, TRUE);
