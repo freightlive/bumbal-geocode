@@ -11,6 +11,12 @@ use BumbalGeocode\Model\GeoProviderOptions;
 class Google implements GeoProvider
 {
     const URL = 'https://maps.googleapis.com/maps/api/geocode/json?address={{address}}&key={{apikey}}';
+
+    const GOOGLE_STATUS_ACCEPTED = [
+        'ZERO_RESULTS',
+        'OK'
+    ];
+
     const GOOGLE_RESULT_TYPE_STREET_ADDRESS = 'street_address';
     const GOOGLE_RESULT_TYPE_ROUTE = 'route';
     const GOOGLE_RESULT_TYPE_LOCALITY = 'locality';
@@ -101,7 +107,7 @@ class Google implements GeoProvider
      * @throws \Exception
      */
     private function validateResult(array $data){
-        if(empty($data['status']) || $data['status'] != "OK"){
+        if(empty($data['status']) || !in_array($data['status'], self::GOOGLE_STATUS_ACCEPTED)){
             throw new \Exception('Google maps API returned Status Code: '.$data['status']);
         }
 
@@ -161,7 +167,6 @@ class Google implements GeoProvider
      */
     private function request(string $address_string) {
         $url = str_replace(['{{address}}', '{{apikey}}'], [urlencode($address_string), $this->api_key], self::URL);
-
         $channel = curl_init();
 
         curl_setopt($channel, CURLOPT_URL, $url);
