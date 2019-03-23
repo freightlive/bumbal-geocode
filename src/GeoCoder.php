@@ -5,22 +5,22 @@ namespace BumbalGeocode;
 use BumbalGeocode\Model\LatLngResultList;
 use BumbalGeocode\Model\LatLngResult;
 use BumbalGeocode\Model\Address;
-use BumbalGeocode\Model\GeocoderOptions;
+use BumbalGeocode\Model\GeoCoderOptions;
 
-class Geocoder {
+class GeoCoder {
 
     protected $providers;
 
     protected $options;
 
     /**
-     * Geocoder constructor.
+     * GeoCoder constructor.
      * @param GeoProviderList $providers
-     * @param GeocoderOptions $options
+     * @param GeoCoderOptions $options
      */
-    public function __construct(GeoProviderList $providers, GeocoderOptions $options = NULL){
+    public function __construct(GeoProviderList $providers, GeoCoderOptions $options = NULL){
         $this->providers = $providers;
-        $this->options = ($options ? $options : new GeocoderOptions());
+        $this->options = ($options ? $options : new GeoCoderOptions());
     }
 
     /**

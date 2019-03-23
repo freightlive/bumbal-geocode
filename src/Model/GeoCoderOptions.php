@@ -3,7 +3,7 @@
 namespace BumbalGeocode\Model;
 
 
-class GeocoderOptions {
+class GeoCoderOptions {
 
     /**
      * @var bool

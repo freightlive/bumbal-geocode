@@ -164,4 +164,55 @@ class Address {
         $address_array = array_filter($address_array);
         return implode(', ', $address_array);
     }
+
+    /**
+     * return value from 0 to 1
+     * @param Address $address
+     * @return float
+     */
+    public function compare(Address $address){
+        mb_internal_encoding('UTF-8');
+
+        //country and city have to match
+        if(strtolower($address->getIsoCountry()) != strtolower($this->iso_country)){
+            return 0.0;
+        }
+
+        if(mb_strtolower($address->getCity()) != mb_strtolower($this->city)){
+            return 0.0;
+        }
+
+        //give points for each matching member, adding up to 1
+        $result = 0.0;
+        if(str_replace(' ','', mb_strtolower($address->getZipcode())) == str_replace(' ','', mb_strtolower($this->zipcode))){
+            $result += 0.2;
+        }
+
+        if(mb_strtolower($address->getStreet()) == mb_strtolower($this->street)){
+            $result += 0.6;
+        }
+
+        if(str_replace([' ','-'],'',mb_strtolower($address->getHouseNr())) == str_replace([' ','-'],'',mb_strtolower($this->house_nr))){
+            $result += 0.2;
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param Address $address
+     * @return float|int
+     */
+    public function similarity(Address $address){
+        $result = 0.0;
+        try {
+            $address_string = $address->getAddressString();
+            $address_string_this = $this->getAddressString();
+
+        } catch (\Exception $e){
+            return 0.0;
+        }
+        similar_text($address_string_this, $address_string, $result);
+        return $result/100;
+    }
 }

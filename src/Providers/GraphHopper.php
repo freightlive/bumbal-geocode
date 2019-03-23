@@ -126,7 +126,8 @@ class GraphHopper implements GeoProvider {
         curl_setopt($channel, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($channel, CURLOPT_HEADER, false);
         curl_setopt($channel, CURLOPT_POST, false);
-        curl_setopt($channel, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($channel, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($channel, CURLOPT_SSL_VERIFYHOST, 2);
 
         $response = curl_exec($channel);
 
