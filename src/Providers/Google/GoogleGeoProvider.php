@@ -3,6 +3,7 @@
 namespace BumbalGeocode\Providers\Google;
 
 use BumbalGeocode\GeoProvider;
+use BumbalGeocode\GeoResponseAnalyser;
 use BumbalGeocode\Model\Address;
 use BumbalGeocode\Model\LatLngResult;
 use BumbalGeocode\Model\LatLngResultList;
@@ -27,9 +28,9 @@ class GoogleGeoProvider implements GeoProvider
      * GoogleGeoProvider constructor.
      * @param string $api_key
      * @param GeoProviderOptions|NULL $options
-     * @param GoogleGeoResponseAnalyser|NULL $response_analyser
+     * @param GeoResponseAnalyser|NULL $response_analyser
      */
-    public function __construct(string $api_key, GeoProviderOptions $options = NULL, GoogleGeoResponseAnalyser $response_analyser = NULL) {
+    public function __construct(string $api_key, GeoProviderOptions $options = NULL, GeoResponseAnalyser $response_analyser = NULL) {
         $this->api_key = $api_key;
         $this->options = ($options ? $options : new GeoProviderOptions());
         $this->response_analyser = ($response_analyser ? $response_analyser : new GoogleGeoResponseAnalyser());
