@@ -53,7 +53,6 @@ class GoogleGeoResponseAnalyser extends GeoResponseAnalyser {
     /**
      * GoogleGeoValueAnalyser constructor.
      * @param array $weights
-     * @throws \Exception
      */
     public function __construct(array $weights = []) {
         parent::__construct($weights);

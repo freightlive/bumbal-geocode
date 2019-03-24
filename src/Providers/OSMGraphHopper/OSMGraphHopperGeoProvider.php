@@ -23,7 +23,6 @@ class OSMGraphHopperGeoProvider implements GeoProvider {
      * @param string $api_key
      * @param GeoProviderOptions|NULL $options
      * @param OSMGraphHopperGeoResponseAnalyser $response_analyser
-     * @throws \Exception
      */
     public function __construct(string $api_key, GeoProviderOptions $options = NULL, OSMGraphHopperGeoResponseAnalyser $response_analyser = NULL) {
         $this->api_key = $api_key;

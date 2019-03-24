@@ -14,7 +14,6 @@ class GeoResponseAnalyser {
     /**
      * GeoPrecisionAnalyser constructor.
      * @param array $weights
-     * @throws \Exception
      */
     public function __construct(array $weights = []) {
         $this->init();
@@ -52,9 +51,7 @@ class GeoResponseAnalyser {
         return array_sum($values_weighted)/$count_values;
     }
 
-    /**
-     * @throws \Exception
-     */
+
     private function init() {
         $this->valueMethodNames = preg_grep('/^getValue[A-Z]/', get_class_methods($this));
 

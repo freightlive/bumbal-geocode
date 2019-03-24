@@ -28,7 +28,6 @@ class GoogleGeoProvider implements GeoProvider
      * @param string $api_key
      * @param GeoProviderOptions|NULL $options
      * @param GoogleGeoResponseAnalyser|NULL $response_analyser
-     * @throws \Exception
      */
     public function __construct(string $api_key, GeoProviderOptions $options = NULL, GoogleGeoResponseAnalyser $response_analyser = NULL) {
         $this->api_key = $api_key;

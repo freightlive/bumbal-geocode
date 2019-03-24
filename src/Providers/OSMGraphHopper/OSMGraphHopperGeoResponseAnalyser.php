@@ -39,7 +39,6 @@ class OSMGraphHopperGeoResponseAnalyser extends GeoResponseAnalyser{
     /**
      * OSMGraphHopperGeoResponseAnalyser constructor.
      * @param array $weights
-     * @throws \Exception
      */
     public function __construct(array $weights = []) {
         parent::__construct($weights);
