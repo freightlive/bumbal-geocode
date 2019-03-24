@@ -39,6 +39,7 @@ class Address {
                 $this->$key = $value;
             }
         }
+        $this->formatZipcode();
     }
 
     public function toArray(){
@@ -114,6 +115,7 @@ class Address {
      */
     public function setZipcode(string $zipcode){
         $this->zipcode = $zipcode;
+        $this->formatZipcode();
     }
 
 
@@ -164,4 +166,61 @@ class Address {
         $address_array = array_filter($address_array);
         return implode(', ', $address_array);
     }
+
+    /**
+     * return value from 0 to 1
+     * @param Address $address
+     * @return float
+     */
+    public function compare(Address $address){
+        mb_internal_encoding('UTF-8');
+
+        //give points for each matching member, adding up to 1
+        $result = 0.0;
+        if(strtolower($address->getIsoCountry()) == strtolower($this->iso_country)){
+            $result += 0.2;
+        }
+
+        if(mb_strtolower($address->getCity()) == mb_strtolower($this->city)){
+            $result += 0.2;
+        }
+
+        if(empty($this->zipcode) || $address->getZipcode() == $this->zipcode){
+            $result += 0.2;
+        }
+
+        if(empty($this->street) || mb_strtolower($address->getStreet()) == mb_strtolower($this->street)){
+            $result += 0.2;
+        }
+
+        if(empty($this->house_nr) || str_replace([' ','-'],'',mb_strtolower($address->getHouseNr())) == str_replace([' ','-'],'',mb_strtolower($this->house_nr))){
+            $result += 0.2;
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param Address $address
+     * @return float|int
+     */
+    public function similarity(Address $address){
+        mb_internal_encoding('UTF-8');
+        $result = 0.0;
+        try {
+            $address_string = mb_strtolower($address->getAddressString());
+            $address_string_this = mb_strtolower($this->getAddressString());
+
+        } catch (\Exception $e){
+            return 0.0;
+        }
+        similar_text($address_string_this, $address_string, $result);
+        return $result/100;
+    }
+
+    private function formatZipcode(){
+        mb_internal_encoding('UTF-8');
+        $this->zipcode = str_replace(' ','', mb_strtoupper($this->zipcode));
+    }
+
 }

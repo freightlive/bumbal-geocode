@@ -1,6 +1,6 @@
 <?php
 
-namespace BumbalGeocode\Providers;
+namespace BumbalGeocode\Providers\OSMGraphHopper;
 
 use BumbalGeocode\GeoProvider;
 use BumbalGeocode\Model\Address;
@@ -9,26 +9,26 @@ use BumbalGeocode\Model\LatLngResultList;
 use BumbalGeocode\Model\GeoProviderOptions;
 
 
-class GraphHopper implements GeoProvider {
+class OSMGraphHopperGeoProvider implements GeoProvider {
     const URL = 'https://graphhopper.com/api/1/geocode?q={{address}}&locale=en&debug=true&key={{apikey}}';
-
-    const OSM_KEY_PLACE = 'place';
-    const OSM_VALUE_HOUSE = 'house';
-
 
     const PROVIDER_NAME = 'graphhopper_osm';
 
     private $api_key;
     private $options;
+    private $response_analyser;
 
     /**
-     * Google constructor.
+     * OSMGraphHopperGeoProvider constructor.
      * @param string $api_key
-     * @param GeoProviderOptions $options
+     * @param GeoProviderOptions|NULL $options
+     * @param OSMGraphHopperGeoResponseAnalyser $response_analyser
+     * @throws \Exception
      */
-    public function __construct(string $api_key, GeoProviderOptions $options = NULL) {
+    public function __construct(string $api_key, GeoProviderOptions $options = NULL, OSMGraphHopperGeoResponseAnalyser $response_analyser = NULL) {
         $this->api_key = $api_key;
         $this->options = ($options ? $options : new GeoProviderOptions());
+        $this->response_analyser = ($response_analyser ? $response_analyser : new OSMGraphHopperGeoResponseAnalyser());
     }
 
     /**
@@ -56,7 +56,7 @@ class GraphHopper implements GeoProvider {
             }
 
             foreach($graphhopper_result['hits'] as $single_graphhopper_result) {
-                $single_result = $this->analyseResult($single_graphhopper_result);
+                $single_result = $this->analyseResult($single_graphhopper_result, $address);
                 if($single_result->getPrecision() >= $precision){
                     $result->setLatLngResult($single_result);
                 }
@@ -96,18 +96,13 @@ class GraphHopper implements GeoProvider {
      * @return LatLngResult
      * @throws \Exception
      */
-    private function analyseResult(array $data){
+    private function analyseResult(array $data, Address $address){
 
         $result = new LatLngResult();
-        if($data['osm_key'] != self::OSM_KEY_PLACE || $data['osm_value'] != self::OSM_VALUE_HOUSE){
-            $result->setPrecision(0.0);
-        } else {
-            $result->setPrecision(1.0);
-        }
-
         $result->setProviderName(self::PROVIDER_NAME);
         $result->setLatitude($data['point']['lat']);
         $result->setLongitude($data['point']['lng']);
+        $result->setPrecision($this->response_analyser->getValue($data, $address));
 
         return $result;
     }
@@ -126,7 +121,8 @@ class GraphHopper implements GeoProvider {
         curl_setopt($channel, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($channel, CURLOPT_HEADER, false);
         curl_setopt($channel, CURLOPT_POST, false);
-        curl_setopt($channel, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($channel, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($channel, CURLOPT_SSL_VERIFYHOST, 2);
 
         $response = curl_exec($channel);
 
