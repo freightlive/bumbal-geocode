@@ -21,19 +21,19 @@ class GoogleGeoProvider implements GeoProvider
 
     private $api_key;
     private $options;
-    private $precision_analyser;
+    private $response_analyser;
 
     /**
      * GoogleGeoProvider constructor.
      * @param string $api_key
      * @param GeoProviderOptions|NULL $options
-     * @param GoogleGeoPrecisionAnalyser|NULL $precision_analyser
+     * @param GoogleGeoResponseAnalyser|NULL $response_analyser
      * @throws \Exception
      */
-    public function __construct(string $api_key, GeoProviderOptions $options = NULL, GoogleGeoPrecisionAnalyser $precision_analyser = NULL) {
+    public function __construct(string $api_key, GeoProviderOptions $options = NULL, GoogleGeoResponseAnalyser $response_analyser = NULL) {
         $this->api_key = $api_key;
         $this->options = ($options ? $options : new GeoProviderOptions());
-        $this->precision_analyser = ($precision_analyser ? $precision_analyser : new GoogleGeoPrecisionAnalyser());
+        $this->response_analyser = ($response_analyser ? $response_analyser : new GoogleGeoResponseAnalyser());
     }
 
     /**
@@ -66,6 +66,7 @@ class GoogleGeoProvider implements GeoProvider
                 if($single_result->getPrecision() >= $precision){
                     $result->setLatLngResult($single_result);
                 }
+
             }
 
             if($this->options->log_debug){
@@ -111,7 +112,7 @@ class GoogleGeoProvider implements GeoProvider
         $result->setProviderName(self::PROVIDER_NAME);
         $result->setLatitude($data['geometry']['location']['lat']);
         $result->setLongitude($data['geometry']['location']['lng']);
-        $result->setPrecision($this->precision_analyser->getPrecision($data, $address));
+        $result->setPrecision($this->response_analyser->getValue($data, $address));
 
         return $result;
     }

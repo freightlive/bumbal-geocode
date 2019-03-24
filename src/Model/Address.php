@@ -39,6 +39,7 @@ class Address {
                 $this->$key = $value;
             }
         }
+        $this->formatZipcode();
     }
 
     public function toArray(){
@@ -114,6 +115,7 @@ class Address {
      */
     public function setZipcode(string $zipcode){
         $this->zipcode = $zipcode;
+        $this->formatZipcode();
     }
 
 
@@ -173,26 +175,25 @@ class Address {
     public function compare(Address $address){
         mb_internal_encoding('UTF-8');
 
-        //country and city have to match
-        if(strtolower($address->getIsoCountry()) != strtolower($this->iso_country)){
-            return 0.0;
-        }
-
-        if(mb_strtolower($address->getCity()) != mb_strtolower($this->city)){
-            return 0.0;
-        }
-
         //give points for each matching member, adding up to 1
         $result = 0.0;
-        if(str_replace(' ','', mb_strtolower($address->getZipcode())) == str_replace(' ','', mb_strtolower($this->zipcode))){
+        if(strtolower($address->getIsoCountry()) == strtolower($this->iso_country)){
             $result += 0.2;
         }
 
-        if(mb_strtolower($address->getStreet()) == mb_strtolower($this->street)){
-            $result += 0.6;
+        if(mb_strtolower($address->getCity()) == mb_strtolower($this->city)){
+            $result += 0.2;
         }
 
-        if(str_replace([' ','-'],'',mb_strtolower($address->getHouseNr())) == str_replace([' ','-'],'',mb_strtolower($this->house_nr))){
+        if(empty($this->zipcode) || $address->getZipcode() == $this->zipcode){
+            $result += 0.2;
+        }
+
+        if(empty($this->street) || mb_strtolower($address->getStreet()) == mb_strtolower($this->street)){
+            $result += 0.2;
+        }
+
+        if(empty($this->house_nr) || str_replace([' ','-'],'',mb_strtolower($address->getHouseNr())) == str_replace([' ','-'],'',mb_strtolower($this->house_nr))){
             $result += 0.2;
         }
 
@@ -204,10 +205,11 @@ class Address {
      * @return float|int
      */
     public function similarity(Address $address){
+        mb_internal_encoding('UTF-8');
         $result = 0.0;
         try {
-            $address_string = $address->getAddressString();
-            $address_string_this = $this->getAddressString();
+            $address_string = mb_strtolower($address->getAddressString());
+            $address_string_this = mb_strtolower($this->getAddressString());
 
         } catch (\Exception $e){
             return 0.0;
@@ -215,4 +217,10 @@ class Address {
         similar_text($address_string_this, $address_string, $result);
         return $result/100;
     }
+
+    private function formatZipcode(){
+        mb_internal_encoding('UTF-8');
+        $this->zipcode = str_replace(' ','', mb_strtoupper($this->zipcode));
+    }
+
 }

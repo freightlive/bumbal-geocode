@@ -4,12 +4,12 @@ namespace BumbalGeocode;
 
 use BumbalGeocode\Model\Address;
 
-class GeoPrecisionAnalyser {
+class GeoResponseAnalyser {
 
     protected $weights = [];
 
-    protected $precisionMethodNames = [];
-    protected $precisionKeys = [];
+    protected $valueMethodNames = [];
+    protected $valueKeys = [];
 
     /**
      * GeoPrecisionAnalyser constructor.
@@ -26,45 +26,59 @@ class GeoPrecisionAnalyser {
      * @param Address $address
      * @return float
      */
-    public function getPrecision(array $data, Address $address){
+    public function getValue(array $data, Address $address){
 
         $values = [];
-        foreach($this->precisionMethodNames as $index => $method_name){
-            $values[$this->precisionKeys[$index]] = $this->$method_name($data, $address);
+        foreach($this->valueMethodNames as $index => $method_name){
+            $key = $this->valueKeys[$index];
+
+            //skip execution method if weight for the result is zero
+            if($this->weights[$key] == 0.0){
+                $values[$key] = 0.0;
+            } else {
+                $values[$key] = $this->$method_name($data, $address);
+            }
+
         }
 
         $values_weighted = array_map(function($value, $weight) {
             return $value * $weight;
         }, $values, $this->weights);
 
-        return array_sum($values_weighted)/count($values_weighted);
+        $count_values = count($values_weighted);
+        if($count_values == 0){
+            return 0.0;
+        }
+        return array_sum($values_weighted)/$count_values;
     }
 
     /**
      * @throws \Exception
      */
-    private function init(){
-        $this->precisionMethodNames = preg_grep('/^precision[A-Z]/', get_class_methods($this));
+    private function init() {
+        $this->valueMethodNames = preg_grep('/^getValue[A-Z]/', get_class_methods($this));
 
-        if(empty($this->precisionMethodNames)){
-            throw new \Exception('No precision methods implemented in '.get_class($this));
+        //no getValue methods implemented?
+        if (empty($this->valueMethodNames)) {
+            $this->valueMethodNames = [];
         }
-        sort($this->precisionMethodNames);
-        $this->precisionKeys = $this->precisionMethodNames;
-        array_walk($this->precisionKeys, function(&$method_name, $key, $make_key_method){$method_name = $make_key_method($method_name);}, [$this, 'makeKeyFromMethodName']);
+
+        sort($this->valueMethodNames);
+        $this->valueKeys = $this->valueMethodNames;
+        array_walk($this->valueKeys, function(&$method_name, $key, $make_key_method){$method_name = $make_key_method($method_name);}, [$this, 'makeKeyFromMethodName']);
     }
 
     /**
-     * sets weights and all uninitialized weights to 1
+     * sets weights and all uninitialized weights to 0
      * @param array $weights
      */
     public function setWeights(array $weights = []){
 
-        foreach($this->precisionKeys as $key){
+        foreach($this->valueKeys as $key){
             if(isset($weights[$key])){
                 $this->weights[$key] = $weights[$key];
             } else {
-                $this->weights[$key] = 1.0;
+                $this->weights[$key] = 0.0;
             }
         }
         $this->normalizeWeights();
@@ -81,7 +95,7 @@ class GeoPrecisionAnalyser {
      * @return array
      */
     public function getKeys(){
-        return $this->precisionKeys;
+        return $this->valueKeys;
     }
 
     private function normalizeWeights(){
@@ -96,6 +110,6 @@ class GeoPrecisionAnalyser {
     }
 
     private function makeKeyFromMethodName($string) {
-        return str_replace('precision_', '', strtolower( preg_replace( '/([A-Z])/', '_$1', lcfirst( $string ) ) ));
+        return str_replace('get_value_', '', strtolower( preg_replace( '/([A-Z])/', '_$1', lcfirst( $string ) ) ));
     }
 }

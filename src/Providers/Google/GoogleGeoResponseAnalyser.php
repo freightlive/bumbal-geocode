@@ -3,10 +3,10 @@
 namespace BumbalGeocode\Providers\Google;
 
 
-use BumbalGeocode\GeoPrecisionAnalyser;
+use BumbalGeocode\GeoResponseAnalyser;
 use BumbalGeocode\Model\Address;
 
-class GoogleGeoPrecisionAnalyser extends GeoPrecisionAnalyser {
+class GoogleGeoResponseAnalyser extends GeoResponseAnalyser {
 
     const GOOGLE_RESULT_TYPE_STREET_ADDRESS = 'street_address';
     const GOOGLE_RESULT_TYPE_STREET_NUMBER = 'street_number';
@@ -19,7 +19,7 @@ class GoogleGeoPrecisionAnalyser extends GeoPrecisionAnalyser {
     /**
      * @todo tweak values
      */
-    const PRECISION_GOOGLE_RESULT_TYPES = [
+    const VALUE_GOOGLE_RESULT_TYPES = [
         self::GOOGLE_RESULT_TYPE_STREET_ADDRESS => 1.0,
         self::GOOGLE_RESULT_TYPE_ROUTE => 0.9,
         self::GOOGLE_RESULT_TYPE_SUBLOCALITY => 0.6,
@@ -35,7 +35,7 @@ class GoogleGeoPrecisionAnalyser extends GeoPrecisionAnalyser {
     /**
      * @todo tweak values
      */
-    const PRECISION_GOOGLE_LOCATION_TYPES = [
+    const VALUE_GOOGLE_LOCATION_TYPES = [
         self::GOOGLE_LOCATION_TYPE_ROOFTOP => 1.0,
         self::GOOGLE_LOCATION_TYPE_RANGE_INTERPOLATED => 0.9,
         self::GOOGLE_LOCATION_TYPE_GEOMETRIC_CENTER => 0.6,
@@ -51,7 +51,7 @@ class GoogleGeoPrecisionAnalyser extends GeoPrecisionAnalyser {
     ];
 
     /**
-     * GoogleGeoPrecisionAnalyser constructor.
+     * GoogleGeoValueAnalyser constructor.
      * @param array $weights
      * @throws \Exception
      */
@@ -64,8 +64,8 @@ class GoogleGeoPrecisionAnalyser extends GeoPrecisionAnalyser {
      * @param Address $address
      * @return float
      */
-    protected function precisionResultTypes(array $google_result, Address $address){
-        return max(array_intersect_key(self::PRECISION_GOOGLE_RESULT_TYPES, array_flip($google_result['types'])));
+    protected function getValueResultTypes(array $google_result, Address $address){
+        return max(array_intersect_key(self::VALUE_GOOGLE_RESULT_TYPES, array_flip($google_result['types'])));
     }
 
     /**
@@ -73,9 +73,9 @@ class GoogleGeoPrecisionAnalyser extends GeoPrecisionAnalyser {
      * @param Address $address
      * @return float
      */
-    protected function precisionLocationType(array $google_result, Address $address){
-        if(isset(self::PRECISION_GOOGLE_LOCATION_TYPES[$google_result['geometry']['location_type']])){
-            return self::PRECISION_GOOGLE_LOCATION_TYPES[$google_result['geometry']['location_type']];
+    protected function getValueLocationType(array $google_result, Address $address){
+        if(isset(self::VALUE_GOOGLE_LOCATION_TYPES[$google_result['geometry']['location_type']])){
+            return self::VALUE_GOOGLE_LOCATION_TYPES[$google_result['geometry']['location_type']];
         }
         return 0.0;
     }
@@ -85,7 +85,7 @@ class GoogleGeoPrecisionAnalyser extends GeoPrecisionAnalyser {
      * @param Address $address
      * @return float
      */
-    protected function precisionAddressComponentsCompare(array $google_result, Address $address){
+    protected function getValueAddressComponentsEquals(array $google_result, Address $address){
         $address_from_google = $this->makeAddressFromAddressComponents($google_result['address_components']);
         return $address->compare($address_from_google);
     }
@@ -96,7 +96,7 @@ class GoogleGeoPrecisionAnalyser extends GeoPrecisionAnalyser {
      * @param Address $address
      * @return float
      */
-    protected function precisionAddressComponentsSimilarity(array $google_result, Address $address){
+    protected function getValueAddressComponentsSimilarity(array $google_result, Address $address){
         $address_from_google = $this->makeAddressFromAddressComponents($google_result['address_components']);
         return $address->similarity($address_from_google);
     }
@@ -106,7 +106,7 @@ class GoogleGeoPrecisionAnalyser extends GeoPrecisionAnalyser {
      * @param Address $address
      * @return float
      */
-     protected function precisionBoundingBox(array $google_result, Address $address){
+     protected function getValueBoundingBox(array $google_result, Address $address){
          //no bounds in result, so result is a point
          if(empty($google_result['geometry']['bounds'])){
              return 1.0;
@@ -116,12 +116,12 @@ class GoogleGeoPrecisionAnalyser extends GeoPrecisionAnalyser {
          //calculate distance on earth's surface between points of bounding box
          $distance_meters = $this->haversineGreatCircleDistance($bounds['northeast']['lat'], $bounds['northeast']['lng'], $bounds['southwest']['lat'], $bounds['southwest']['lng']);
 
-         //500 meters is too much, 0 meters is perfect
-         if($distance_meters > 500){
+         //1000 meters is too much, 0 meters is perfect
+         if($distance_meters > 1000.0){
              return 0.0;
          }
 
-         return 1.0 - $distance_meters / 500.0;
+         return 1.0 - $distance_meters / 1000.0;
 
      }
 
@@ -151,7 +151,7 @@ class GoogleGeoPrecisionAnalyser extends GeoPrecisionAnalyser {
      * @param float $earthRadius Mean earth radius in [m]
      * @return float Distance between points in [m] (same as earthRadius)
      */
-    function haversineGreatCircleDistance($latitudeFrom, $longitudeFrom, $latitudeTo, $longitudeTo, $earthRadius = 6371000)
+    function haversineGreatCircleDistance($latitudeFrom, $longitudeFrom, $latitudeTo, $longitudeTo, $earthRadius = 6371000.0)
     {
         // convert from degrees to radians
         $latFrom = deg2rad($latitudeFrom);
@@ -164,6 +164,6 @@ class GoogleGeoPrecisionAnalyser extends GeoPrecisionAnalyser {
 
         $angle = 2 * asin(sqrt(pow(sin($latDelta / 2), 2) +
                 cos($latFrom) * cos($latTo) * pow(sin($lonDelta / 2), 2)));
-        return $angle * $earthRadius;
+        return abs($angle * $earthRadius);
     }
 }

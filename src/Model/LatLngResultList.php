@@ -24,6 +24,7 @@ class LatLngResultList implements Iterator, Countable, ArrayAccess {
      */
     protected $lat_lng_results = [];
 
+    
     /**
      * LatLngResultList constructor.
      * @param array $lat_lng_results
@@ -121,7 +122,12 @@ class LatLngResultList implements Iterator, Countable, ArrayAccess {
      */
     private function orderLatLngResults(){
         usort($this->lat_lng_results, function(LatLngResult $a, LatLngResult $b){
-            return $a->getPrecision() > $b->getPrecision();
+            $a_precision = $a->getPrecision();
+            $b_precision = $b->getPrecision();
+            if($a_precision == $b_precision){
+                return 0;
+            }
+            return ($a_precision < $b_precision) ? 1 : -1;
         });
     }
 
