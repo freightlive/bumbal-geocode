@@ -1,4 +1,4 @@
-# bumbal-geocode
+# Bumbal-Geocoder
 Bumbal GeoCoder for turning address data into coordinates. 
 
 
@@ -27,7 +27,7 @@ To install the bindings via [Composer](http://getcomposer.org/), add the followi
 
 Then run `composer install`
 
-##Basic Usage
+## Basic Usage
 
 Different providers can be fed into the GeoCoder through the `GeoProviderList` class. In priority order, these providers will try to geocode an `Address`.
 
@@ -58,16 +58,16 @@ $result = $geo_coder->getLatLngResultListFromAddress($address, 0.6);
 var_dump($result);
 ```
 
-##Advanced Usage
+## Advanced Usage
 
-###GeoCoderOptions
+### GeoCoderOptions
 
 The `GeoCoderOptions` class currently has two options to influence the results given back by the `GeoCoder`.
 
 - quit_on_error: If any error is encountered (e.g. an external provider's endpoint can't be reached), processing is stopped immediately and the `LatLngResultList` is returned. Default value is `FALSE`.
 - quit_after_first_result: If a provider gives at least one satisfactory result measured by the `$precision` parameter, processing is stopped immediately and the `LatLngResultList` is returned. Default value is `TRUE`.
 
-####Example
+#### Example
 ```php
 $google_provider = new \BumbalGeocode\Providers\Google\GoogleGeoProvider('google_maps_api_key');
 
@@ -83,7 +83,7 @@ $geo_coder = new \BumbalGeocode\GeoCoder(new \BumbalGeocode\GeoProviderList([
 ```
 
 
-###GeoProviderOptions
+### GeoProviderOptions
 
 The `GeoProviderOptions` class currently has two options that determine the logging and error data returned in the `LatLngResultList` result. 
 Note that these options are set per provider, but their results are combined in the `LatLngResultList` result returned by `$geo_coder->getLatLngResultListFromAddress($address, $precision)`.
@@ -91,7 +91,7 @@ Note that these options are set per provider, but their results are combined in 
 - log_errors: Default value is `TRUE`.
 - log_debug: Default value is `FALSE`.
 
-####Example
+#### Example
 ```php
 $provider_options = new \BumbalGeocode\Model\GeoProviderOptions([
     'log_debug' => TRUE,
@@ -106,16 +106,16 @@ $geo_coder = new \BumbalGeocode\GeoCoder(new \BumbalGeocode\GeoProviderList([
 
 ```
 
-###GeoProviderList
+### GeoProviderList
 
 The `GeoProviderList` class has some methods to control provider priority and query contained providers.
 
-####Setting providers
+#### Setting providers
 
 - Passing providers in constructor will set provider priority to the order in which providers were presented.
 - Adding a provider through the `setProvider(GeoProvider $provider, int $priority = 0)` method will add a provider and order the provider list according to the `$priority` parameter. When two providers are given with the same priority, the last one added will take precedence.
 
-####Getting providers
+#### Getting providers
 
 - `getProviders()` method will return all providers in priority and precedence order.
 - `getProviders(int $priority)` will return all providers with `$priority` in precedence order.
@@ -123,7 +123,7 @@ The `GeoProviderList` class has some methods to control provider priority and qu
 
 
 
-###GeoResponseAnalyser
+### GeoResponseAnalyser
 
 `GeoProvider` implementations can use an instance of `GeoResponseAnalyser` to analyse and value results.
 
@@ -138,7 +138,7 @@ What weight is applied to what result is determined by the weight key. This is a
 
 For example: the result of a method names `getValuePositionOnMap` will have a weight key `position_on_map`.
 
-####Example
+#### Example
 ```php
  $google_precision_analyser = new \BumbalGeocode\Providers\Google\GoogleGeoResponseAnalyser([
     'result_types' => 1,
@@ -154,4 +154,5 @@ $google_provider = new \BumbalGeocode\Providers\Google\GoogleGeoProvider('google
 This means that in the final combined result, the result of the `getValueAddressComponentsSimilarity` method will be valued five times as much as the result of `getValueResultTypes`.
 
 Weight keys that aren't set will have a default value of 0.0, the corresponding method will not be executed.
-##Tweaking the GeoCoding Results 
+
+## Tweaking the GeoCoding Results 
