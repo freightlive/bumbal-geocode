@@ -65,7 +65,7 @@ var_dump($result);
 The `GeoCoderOptions` class currently has two options to influence the results given back by the `GeoCoder`.
 
 - quit_on_error: If any error is encountered (e.g. an external provider's endpoint can't be reached), processing is stopped immediately and the `LatLngResultList` is returned. Default value is `FALSE`.
-- quit_after_first_result: If a provider gives at least one satisfactory result measured by the `$precision` parameter, processing is stopped immediately and the `LatLngResultList` is returned. Default value is `TRUE`.
+- quit_after_first_result: If a provider returns at least one satisfactory result measured by the `$precision` parameter, processing is stopped immediately and the `LatLngResultList` is returned. Default value is `TRUE`.
 
 #### Example
 ```php
@@ -113,13 +113,13 @@ The `GeoProviderList` class has some methods to control provider priority and qu
 #### Setting providers
 
 - Passing providers in constructor will set provider priority to the order in which providers were presented.
-- Adding a provider through the `setProvider(GeoProvider $provider, int $priority = 0)` method will add a provider and order the provider list according to the `$priority` parameter. When two providers are given with the same priority, the last one added will take precedence.
+- Adding a provider through the `setProvider(GeoProvider $provider, int $priority = 0)` method will insert the provider according to the `$priority` parameter. When two providers are inserted with the same priority, the last one added will take precedence.
 
 #### Getting providers
 
-- `getProviders()` method will return all providers in priority and precedence order.
+- `getProviders()` will return all providers in priority and precedence order.
 - `getProviders(int $priority)` will return all providers with `$priority` in precedence order.
-- `getProvider(int $index)` will return the provider on `$index` in the list.
+- `getProvider(int $index)` will return the provider on position `$index` in the list.
 
 
 
@@ -127,7 +127,7 @@ The `GeoProviderList` class has some methods to control provider priority and qu
 
 `GeoProvider` implementations can use an instance of `GeoResponseAnalyser` to analyse and value results.
 
-`GeoResponseAnalyser` is meant to be subclassed for use with a particular `GeoProvider` implementation. In this subclass methods should be implemented to analyse and value a particular aspect of a single result given by the provider as follows:
+`GeoResponseAnalyser` is meant to be subclassed for use with a particular `GeoProvider` implementation. In this subclass methods should be implemented to analyse and value a particular aspect of a single result as queried by the provider as follows:
 - The method names should comply to the regexp `^getValue[A-Z]`
 - The method signature should be `protected function getValueCamelCase(mixed $single_result, Address $address)`
 - The returned result should be a `float` in the range 0..1
@@ -136,7 +136,7 @@ The result of all these methods will be weighed and combined into a final result
 
 What weight is applied to what result is determined by the weight key. This is an uncamelcased version of the `getValueXXX` method name. All available weight keys in a particular `GeoResponseAnalyser` subclass can be queried with the `getKeys()` method.
 
-For example: the result of a method names `getValuePositionOnMap` will have a weight key `position_on_map`.
+For example: the result of a method named `getValuePositionOnMap` will have a weight key `position_on_map`.
 
 #### Example
 ```php
