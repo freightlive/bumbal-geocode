@@ -62,7 +62,7 @@ var_dump($result);
 
 ### GeoCoderOptions
 
-The `GeoCoderOptions` class currently has two options to influence the results given back by the `GeoCoder`.
+The `GeoCoderOptions` class currently has two options to influence the results returned by the `GeoCoder`.
 
 - quit_on_error: If any error is encountered (e.g. an external provider's endpoint can't be reached), processing is stopped immediately and the `LatLngResultList` is returned. Default value is `FALSE`.
 - quit_after_first_result: If a provider returns at least one satisfactory result measured by the `$precision` parameter, processing is stopped immediately and the `LatLngResultList` is returned. Default value is `TRUE`.
@@ -132,7 +132,7 @@ The `GeoProviderList` class has some methods to control provider priority and qu
 - The method signature should be `protected function getValueCamelCase(mixed $single_result, Address $address)`
 - The returned result should be a `float` in the range 0..1
 
-The result of all these methods will be weighed and combined into a final result value. Weights can be set through the `GeoResponseAnalyser` subclass constructor.
+The results of all these methods will be weighed and combined into a final result value. Weights can be set through the `GeoResponseAnalyser` subclass constructor.
 
 What weight is applied to what result is determined by the weight key. This is an uncamelcased version of the `getValueXXX` method name. All available weight keys in a particular `GeoResponseAnalyser` subclass can be queried with the `getKeys()` method.
 
