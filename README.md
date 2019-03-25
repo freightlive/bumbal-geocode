@@ -57,6 +57,19 @@ $address = new \BumbalGeocode\Model\Address([
 $result = $geo_coder->getLatLngResultListFromAddress($address, 0.6);
 var_dump($result);
 ```
+### Address
+The `Address` class holds address data and is used as input for geocoding into a `LatLngResultList` object.
+
+Data can be set in an array as a constructor parameter, or through the setter methods.
+
+### LatLngResultList
+
+Holds geocoding result data as a list of `LatLngResult` objects in precision order. 
+
+To access this list, one can use the `getLatLngResults()` method.
+Alternatively, `LatLngResultList` implements `Iterator`, `Countable` and `ArrayAccess` to access the results like any array.
+
+Depending on the logging and error options set in each provider's `GeoProviderOptions`, a log and error messages will be available through the methods `getLog()` and `getErrors()`.
 
 ## Advanced Usage
 
@@ -65,7 +78,7 @@ var_dump($result);
 The `GeoCoderOptions` class currently has two options to influence the results returned by the `GeoCoder`.
 
 - quit_on_error: If any error is encountered (e.g. an external provider's endpoint can't be reached), processing is stopped immediately and the `LatLngResultList` is returned. Default value is `FALSE`.
-- quit_after_first_result: If a provider returns at least one satisfactory result measured by the `$precision` parameter, processing is stopped immediately and the `LatLngResultList` is returned. Default value is `TRUE`.
+- quit_after_first_result: If a provider returns at least one satisfactory result as measured by the `$precision` parameter, processing is stopped immediately and the `LatLngResultList` is returned. Default value is `TRUE`.
 
 #### Example
 ```php
@@ -121,8 +134,22 @@ The `GeoProviderList` class has some methods to control provider priority and qu
 - `getProviders(int $priority)` will return all providers with `$priority` in precedence order.
 - `getProvider(int $index)` will return the provider on position `$index` in the list.
 
+Furthermore, `GeoProviderList` implements `Iterator` and `Countable`. This makes it possible to loop through the providers with a foreach statement and to get the number of providers contained by `GeoProviderList`.
+```php
+$google_provider = new \BumbalGeocode\Providers\Google\GoogleGeoProvider('google_maps_api_key');
+$graphhopper_provider = new \BumbalGeocode\Providers\OSMGraphHopper\OSMGraphHopperGeoProvider('graphhopper_api_key');
 
+$provider_list = new \BumbalGeocode\GeoProviderList([
+    $google_provider,
+    $graphhopper_provider
+]);
 
+foreach($provider_list as $provider){
+    var_dump($provider);
+}
+
+echo count($provider_list);
+```
 ### GeoResponseAnalyser
 
 `GeoProvider` implementations can use an instance of `GeoResponseAnalyser` to analyse and value results.
@@ -151,8 +178,9 @@ For example: the result of a method named `getValuePositionOnMap` will have a we
 $google_provider = new \BumbalGeocode\Providers\Google\GoogleGeoProvider('google_maps_api_key', NULL, $google_precision_analyser);
 ```
 
-This means that in the final combined result, the result of the `getValueAddressComponentsSimilarity` method will be valued five times as much as the result of `getValueResultTypes`.
+This means that in the final combined result, the result of the `getValueAddressComponentsSimilarity` method will be valued five times as high as the result of `getValueResultTypes`.
 
 Weight keys that aren't set will have a default value of 0.0, the corresponding method will not be executed.
 
-## Tweaking the GeoCoding Results 
+
+
