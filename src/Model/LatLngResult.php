@@ -30,6 +30,10 @@ class LatLngResult {
     protected $provider_name;
 
     /**
+     * @var string
+     */
+    protected $description;
+    /**
      * LatLngResult constructor.
      * @param array $data
      */
@@ -95,5 +99,9 @@ class LatLngResult {
      */
     public function getProviderName(){
         return $this->provider_name;
+    }
+
+    public function setDescription(string $description){
+        $this->description = $description;
     }
 }

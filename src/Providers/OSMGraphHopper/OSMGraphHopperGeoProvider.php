@@ -103,6 +103,7 @@ class OSMGraphHopperGeoProvider implements GeoProvider {
         $result->setLatitude($data['point']['lat']);
         $result->setLongitude($data['point']['lng']);
         $result->setPrecision($this->response_analyser->getValue($data, $address));
+        $result->setDescription($this->response_analyser->getAddressStringFromResult($data));
 
         return $result;
     }

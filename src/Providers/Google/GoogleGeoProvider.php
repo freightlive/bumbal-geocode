@@ -113,6 +113,7 @@ class GoogleGeoProvider implements GeoProvider
         $result->setLatitude($data['geometry']['location']['lat']);
         $result->setLongitude($data['geometry']['location']['lng']);
         $result->setPrecision($this->response_analyser->getValue($data, $address));
+        $result->setDescription($this->response_analyser->getAddressStringFromResult($data));
 
         return $result;
     }

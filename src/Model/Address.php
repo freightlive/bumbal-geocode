@@ -36,10 +36,15 @@ class Address {
     public function __construct(array $data = []){
         foreach($data as $key => $value){
             if(property_exists($this, $key)){
-                $this->$key = $value;
+                switch($key){
+                    case 'zipcode':
+                    case 'iso_country':
+                        $this->$key = $this->normalize($key, trim($value));
+                    default:
+                        $this->$key = trim($value);
+                }
             }
         }
-        $this->formatZipcode();
     }
 
     public function toArray(){
@@ -50,7 +55,7 @@ class Address {
      * @param string $street
      */
     public function setStreet(string $street){
-        $this->street = $street;
+        $this->street = trim($street);
     }
 
     /**
@@ -63,8 +68,8 @@ class Address {
     /**
      * @param string $house_nr
      */
-    public function houseNr(string $house_nr){
-        $this->house_nr = $house_nr;
+    public function setHouseNr(string $house_nr){
+        $this->house_nr = trim($house_nr);
     }
 
     /**
@@ -86,7 +91,7 @@ class Address {
      * @param string $city
      */
     public function setCity(string $city){
-        $this->city = $city;
+        $this->city = trim($city);
     }
 
     /**
@@ -100,7 +105,7 @@ class Address {
      * @param string $iso_country
      */
     public function setIsoCountry(string $iso_country){
-        $this->iso_country = $iso_country;
+        $this->iso_country = $this->normalize('iso_country', trim($iso_country));
     }
 
     /**
@@ -114,8 +119,7 @@ class Address {
      * @param string $zipcode
      */
     public function setZipcode(string $zipcode){
-        $this->zipcode = $zipcode;
-        $this->formatZipcode();
+        $this->zipcode = $this->normalize('zipcode', trim($zipcode));
     }
 
 
@@ -143,7 +147,7 @@ class Address {
         }
 
         if(!empty($missing_fields)) {
-            throw new \Exception('Missing fields in Address ' . implode(', ', $missing_fields));
+            throw new \Exception('Missing fields in Address: \'' . implode('\', \'', $missing_fields).'\'');
         }
 
         $address_array = [
@@ -169,35 +173,87 @@ class Address {
 
     /**
      * return value from 0 to 1
+     * 1 -> certainly the same address
+     * 0 -> certainly not the same address
      * @param Address $address
      * @return float
      */
     public function compare(Address $address){
         mb_internal_encoding('UTF-8');
 
-        //give points for each matching member, adding up to 1
-        $result = 0.0;
-        if(strtolower($address->getIsoCountry()) == strtolower($this->iso_country)){
-            $result += 0.2;
+        //if country iso code doesn't match, it's a big fail
+        if(strtolower($address->getIsoCountry()) != strtolower($this->iso_country)){
+            return 0.0;
         }
 
-        if(mb_strtolower($address->getCity()) == mb_strtolower($this->city)){
-            $result += 0.2;
+        $this_array = array_filter($this->toArray());
+        array_walk($this_array, function(&$value, $key, $normalize_callback){
+            $value = $normalize_callback($key, $value);
+        }, [$this, 'normalize']);
+
+        $address_array = array_filter($address->toArray());
+        array_walk($address_array, function(&$value, $key, $normalize_callback){
+            $value = $normalize_callback($key, $value);
+        }, [$this, 'normalize']);
+
+        $elements_in_both = array_keys(array_intersect_key($this_array, $address_array));
+
+        $count_equal = 0;
+        $elements_no_match = [];
+        foreach ($elements_in_both as $key) {
+            if($this_array[$key] == $address_array[$key]){
+                $count_equal++;
+            } else {
+                $elements_no_match[] = $key;
+            }
         }
 
-        if(empty($this->zipcode) || $address->getZipcode() == $this->zipcode){
-            $result += 0.2;
-        }
+        return $count_equal/count($this_array);
 
-        if(empty($this->street) || mb_strtolower($address->getStreet()) == mb_strtolower($this->street)){
-            $result += 0.2;
-        }
 
-        if(empty($this->house_nr) || str_replace([' ','-'],'',mb_strtolower($address->getHouseNr())) == str_replace([' ','-'],'',mb_strtolower($this->house_nr))){
-            $result += 0.2;
-        }
+        var_dump($elements_in_both);
+        //$equals = array_walk($intersect_array)
 
-        return $result;
+        die();
+        $this_city_normalized = trim(mb_strtolower($this->city));
+        $address_city_normalized = trim(mb_strtolower($address->getCity()));
+        $city_similarity = 0.0;
+        similar_text($this_city_normalized, $address_city_normalized, $city_similarity);
+        $city_similarity /= 100;
+
+        $this_street_normalized = trim(mb_strtolower($this->street));
+        $address_street_normalized = trim(mb_strtolower($address->getStreet()));
+        $street_similarity = 0.0;
+        similar_text($this_street_normalized, $address_street_normalized, $street_similarity);
+        $street_similarity /= 100;
+
+        $this_house_nr_normalized = str_replace([' ','-','/'],'', mb_strtolower($this->house_nr));
+        $address_house_nr_normalized = str_replace([' ','-','/'],'', mb_strtolower($address->getHouseNr()));
+
+        if(empty($this->house_nr)){
+            //closest we can match is zipcode or street/city
+            if(empty($this->zipcode) && empty($this->street)){
+                //closest we can match is city
+                return $city_similarity;
+            } elseif(empty($this->zipcode)){
+                //closest we can match is street/city
+                return $street_similarity * $city_similarity;
+            } else {
+                //closest we can match is zipcode (city is contained in zipcode)
+                return ($this->zipcode == $address->getZipcode() ? 1.0 : 0.0);
+            }
+        } else {
+            //house_nr is set. Closest we can match is zipcode/house_nr or street/house_nr/city
+            if(empty($this->zipcode) && empty($this->street)){
+                //closest we can match is city, house_nr is irrelevant without street or zipcode
+                return $city_similarity;
+            } elseif(empty($this->zipcode)){
+                //closest we can match is street/house_nr/city
+                return $street_similarity * $city_similarity * ($this_house_nr_normalized == $address_house_nr_normalized ? 1.0 : 0.0);
+            } else {
+                return ($this->zipcode == $address->getZipcode() ? 1.0 : 0.0) * ($this_house_nr_normalized == $address_house_nr_normalized ? 1.0 : 0.0);
+            }
+        }
     }
 
     /**
@@ -218,9 +274,28 @@ class Address {
         return $result/100;
     }
 
-    private function formatZipcode(){
+
+    private function normalize($key, $value){
         mb_internal_encoding('UTF-8');
-        $this->zipcode = str_replace(' ','', mb_strtoupper($this->zipcode));
+
+        switch($key){
+            case 'house_nr':
+                $result = str_replace([' ','-','/'],'', mb_strtolower($value));
+                break;
+            case 'zipcode':
+                $result = str_replace(' ','', mb_strtoupper($value));
+                break;
+            case 'city':
+                $result = str_replace('-',' ', mb_strtolower($value));
+                break;
+            case 'iso_country':
+                $result = mb_strtoupper($value);
+                break;
+            default:
+                $result = mb_strtolower($value);
+        }
+
+        return $result;
     }
 
 }

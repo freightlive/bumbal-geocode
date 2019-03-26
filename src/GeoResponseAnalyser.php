@@ -51,6 +51,10 @@ class GeoResponseAnalyser {
         return array_sum($values_weighted)/$count_values;
     }
 
+    public function getAddressStringFromResult(array $data){
+        return '';
+    }
+
 
     private function init() {
         $this->valueMethodNames = preg_grep('/^getValue[A-Z]/', get_class_methods($this));

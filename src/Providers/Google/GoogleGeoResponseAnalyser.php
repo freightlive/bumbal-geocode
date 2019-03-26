@@ -58,6 +58,10 @@ class GoogleGeoResponseAnalyser extends GeoResponseAnalyser {
         parent::__construct($weights);
     }
 
+    public function getAddressStringFromResult(array $data){
+        return $this->makeAddressFromAddressComponents($data['address_components'])->getAddressString();
+    }
+
     /**
      * @param array $google_result
      * @param Address $address
@@ -84,7 +88,7 @@ class GoogleGeoResponseAnalyser extends GeoResponseAnalyser {
      * @param Address $address
      * @return float
      */
-    protected function getValueAddressComponentsEquals(array $google_result, Address $address){
+    protected function getValueAddressComponentsCompare(array $google_result, Address $address){
         $address_from_google = $this->makeAddressFromAddressComponents($google_result['address_components']);
         return $address->compare($address_from_google);
     }
@@ -113,14 +117,14 @@ class GoogleGeoResponseAnalyser extends GeoResponseAnalyser {
          $bounds = $google_result['geometry']['bounds'];
 
          //calculate distance on earth's surface between points of bounding box
-         $distance_meters = $this->haversineGreatCircleDistance($bounds['northeast']['lat'], $bounds['northeast']['lng'], $bounds['southwest']['lat'], $bounds['southwest']['lng']);
+         $area_km2 = $this->surfaceArea($bounds['northeast']['lat'], $bounds['northeast']['lng'], $bounds['southwest']['lat'], $bounds['southwest']['lng']);
 
-         //1000 meters is too much, 0 meters is perfect
-         if($distance_meters > 1000.0){
+         //1 km2 is too much, 0 is perfect
+         if($area_km2 > 1.0){
              return 0.0;
          }
 
-         return 1.0 - $distance_meters / 1000.0;
+         return 1.0 - $area_km2;
 
      }
 
@@ -141,28 +145,22 @@ class GoogleGeoResponseAnalyser extends GeoResponseAnalyser {
     }
 
     /**
-     * Calculates the great-circle distance between two points, with
-     * the Haversine formula.
-     * @param float $latitudeFrom Latitude of start point in [deg decimal]
-     * @param float $longitudeFrom Longitude of start point in [deg decimal]
-     * @param float $latitudeTo Latitude of target point in [deg decimal]
-     * @param float $longitudeTo Longitude of target point in [deg decimal]
-     * @param float $earthRadius Mean earth radius in [m]
-     * @return float Distance between points in [m] (same as earthRadius)
+     * Surface area in km2
+     * @param $latFrom
+     * @param $lonFrom
+     * @param $latTo
+     * @param $lonTo
+     * @param float $earthRadius (km)
+     * @return float
      */
-    function haversineGreatCircleDistance($latitudeFrom, $longitudeFrom, $latitudeTo, $longitudeTo, $earthRadius = 6371000.0)
+    private function surfaceArea($latFrom, $lonFrom, $latTo, $lonTo, $earthRadius = 6378.000)
     {
         // convert from degrees to radians
-        $latFrom = deg2rad($latitudeFrom);
-        $lonFrom = deg2rad($longitudeFrom);
-        $latTo = deg2rad($latitudeTo);
-        $lonTo = deg2rad($longitudeTo);
+        $latFrom = deg2rad($latFrom);
+        $lonFrom = deg2rad($lonFrom);
+        $latTo = deg2rad($latTo);
+        $lonTo = deg2rad($lonTo);
 
-        $latDelta = $latTo - $latFrom;
-        $lonDelta = $lonTo - $lonFrom;
-
-        $angle = 2 * asin(sqrt(pow(sin($latDelta / 2), 2) +
-                cos($latFrom) * cos($latTo) * pow(sin($lonDelta / 2), 2)));
-        return abs($angle * $earthRadius);
+        return $earthRadius * $earthRadius * abs(sin($latTo)-sin($latFrom)) * abs($lonTo-$lonFrom);
     }
 }

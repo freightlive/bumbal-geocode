@@ -22,6 +22,10 @@ class OSMGraphHopperGeoResponseAnalyser extends GeoResponseAnalyser{
         self::OSM_TYPE_RELATION => 0.0
     ];
 
+    const OSM_KEY_STREET = 'highway';
+    const OSM_KEY_CITY = 'place';
+
+
     const OSM_HOUSE_NR = 'housenumber';
     const OSM_STREET = 'street';
     const OSM_ZIPCODE = 'postcode';
@@ -42,6 +46,10 @@ class OSMGraphHopperGeoResponseAnalyser extends GeoResponseAnalyser{
      */
     public function __construct(array $weights = []) {
         parent::__construct($weights);
+    }
+
+    public function getAddressStringFromResult(array $data){
+        return $this->makeAddressFromAddressComponents($data)->getAddressString();
     }
 
     /**
@@ -73,9 +81,11 @@ class OSMGraphHopperGeoResponseAnalyser extends GeoResponseAnalyser{
      * @param Address $address
      * @return float
      */
-    protected function getValueAddressComponentsEquals(array $osm_result, Address $address){
+    protected function getValueAddressComponentsCompare(array $osm_result, Address $address){
         $address_from_osm = $this->makeAddressFromAddressComponents($osm_result);
-        return $address->compare($address_from_osm);
+
+        $result = $address->compare($address_from_osm);
+        return $result;
     }
 
     /**
@@ -101,16 +111,18 @@ class OSMGraphHopperGeoResponseAnalyser extends GeoResponseAnalyser{
         $bounds = $osm_result['extent'];
 
         //calculate distance on earth's surface between points of bounding box
-        $distance_meters = $this->haversineGreatCircleDistance($bounds[1], $bounds[0], $bounds[3], $bounds[2]);
+        $area_km2 = $this->surfaceArea($bounds[1], $bounds[0], $bounds[3], $bounds[2]);
 
-        //1000 meters is too much, 0 meters is perfect
-        if($distance_meters > 1000.0){
+        //1 km2 is too much, 0 is perfect
+        if($area_km2 > 1.0){
             return 0.0;
         }
 
-        return 1.0 - $distance_meters / 1000.0;
+        return 1.0 - $area_km2;
 
     }
+
+
 
     /**
      * @param array $osm_result
@@ -128,6 +140,14 @@ class OSMGraphHopperGeoResponseAnalyser extends GeoResponseAnalyser{
         $iso_codes = array_flip($this->getISOCodes());
         if(!empty($iso_codes[$address_array['iso_country']])){
             $address_array['iso_country'] = $iso_codes[$address_array['iso_country']];
+        }
+
+        if(empty($address_array['street']) && $osm_result['osm_key'] == self::OSM_KEY_STREET){
+            $address_array['street'] = $osm_result['name'];
+        }
+
+        if(empty($address_array['city']) && $osm_result['osm_key'] == self::OSM_KEY_CITY){
+            $address_array['city'] = $osm_result['name'];
         }
 
         return new Address($address_array);
@@ -150,30 +170,25 @@ class OSMGraphHopperGeoResponseAnalyser extends GeoResponseAnalyser{
         return $iso_codes;
     }
 
+
     /**
-     * Calculates the great-circle distance between two points, with
-     * the Haversine formula.
-     * @param float $latitudeFrom Latitude of start point in [deg decimal]
-     * @param float $longitudeFrom Longitude of start point in [deg decimal]
-     * @param float $latitudeTo Latitude of target point in [deg decimal]
-     * @param float $longitudeTo Longitude of target point in [deg decimal]
-     * @param float $earthRadius Mean earth radius in [m]
-     * @return float Distance between points in [m] (same as earthRadius)
+     * Surface area in km2
+     * @param $latFrom
+     * @param $lonFrom
+     * @param $latTo
+     * @param $lonTo
+     * @param float $earthRadius (km)
+     * @return float
      */
-    function haversineGreatCircleDistance($latitudeFrom, $longitudeFrom, $latitudeTo, $longitudeTo, $earthRadius = 6371000.0)
+    private function surfaceArea($latFrom, $lonFrom, $latTo, $lonTo, $earthRadius = 6378.000)
     {
         // convert from degrees to radians
-        $latFrom = deg2rad($latitudeFrom);
-        $lonFrom = deg2rad($longitudeFrom);
-        $latTo = deg2rad($latitudeTo);
-        $lonTo = deg2rad($longitudeTo);
+        $latFrom = deg2rad($latFrom);
+        $lonFrom = deg2rad($lonFrom);
+        $latTo = deg2rad($latTo);
+        $lonTo = deg2rad($lonTo);
 
-        $latDelta = $latTo - $latFrom;
-        $lonDelta = $lonTo - $lonFrom;
-
-        $angle = 2 * asin(sqrt(pow(sin($latDelta / 2), 2) +
-                cos($latFrom) * cos($latTo) * pow(sin($lonDelta / 2), 2)));
-        return abs($angle * $earthRadius);
+        return $earthRadius * $earthRadius * abs(sin($latTo)-sin($latFrom)) * abs($lonTo-$lonFrom);
     }
 
 
