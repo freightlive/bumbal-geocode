@@ -111,7 +111,8 @@ It also has an `add_description` option for setting whether the returned individ
 ```php
 $provider_options = new \BumbalGeocode\Model\GeoProviderOptions([
     'log_debug' => TRUE,
-    'log_errors' => TRUE
+    'log_errors' => TRUE,
+    'add_description' => TRUE
 ]);
 
 $google_provider = new \BumbalGeocode\Providers\Google\GoogleGeoProvider('google_maps_api_key', $provider_options);
@@ -130,6 +131,8 @@ The `GeoProviderList` class has some methods to control provider priority and qu
 
 - Passing providers in constructor will set provider priority to the order in which providers were presented.
 - Adding a provider through the `setProvider(GeoProvider $provider, int $priority = 0)` method will insert the provider according to the `$priority` parameter. When two providers are inserted with the same priority, the last one added will take precedence.
+
+0 = highest priority
 
 #### Getting providers
 
