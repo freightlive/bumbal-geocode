@@ -31,9 +31,9 @@ Then run `composer install`
 
 Different providers can be fed into the GeoCoder through the `GeoProviderList` class. In priority order, these providers will try to geocode an `Address`.
 
-Results are given a precision value in the range 0 to 1. They can be filtered out by providing the threshold `$precision` parameter in `$geo_coder->getLatLngResultListFromAddress($address, $precision)`.
+Results are given a accuracy value in the range 0 to 1. They can be filtered out by providing the threshold `$accuracy` parameter in `$geo_coder->getLatLngResultListFromAddress($address, $accuracy)`.
 
-`$geo_coder->getLatLngResultListFromAddress($address, $precision)` returns a `LatLngResultList`, which is composed of a list of `LatLngResult` (in precision order) and optional log and errors.
+`$geo_coder->getLatLngResultListFromAddress($address, $accuracy)` returns a `LatLngResultList`, which is composed of a list of `LatLngResult` (in accuracy order) and optional log and errors.
 
 Currently there are two Geocoding providers implemented in this package: Google Maps and OpenStreetMap through GraphHopper. 
 
@@ -64,7 +64,7 @@ Data can be set in an array as a constructor parameter, or through the setter me
 
 ### LatLngResultList
 
-Holds geocoding result data as a list of `LatLngResult` objects in precision order. 
+Holds geocoding result data as a list of `LatLngResult` objects in accuracy order. 
 
 To access this list, one can use the `getLatLngResults()` method.
 Alternatively, `LatLngResultList` implements `Iterator`, `Countable` and `ArrayAccess` to access the results like any array.
@@ -78,7 +78,7 @@ Depending on the logging and error options set in each provider's `GeoProviderOp
 The `GeoCoderOptions` class currently has two options to influence the results returned by the `GeoCoder`.
 
 - quit_on_error: If any error is encountered (e.g. an external provider's endpoint can't be reached), processing is stopped immediately and the `LatLngResultList` is returned. Default value is `FALSE`.
-- quit_after_first_result: If a provider returns at least one satisfactory result as measured by the `$precision` parameter, processing is stopped immediately and the `LatLngResultList` is returned. Default value is `TRUE`.
+- quit_after_first_result: If a provider returns at least one satisfactory result as measured by the `$accuracy` parameter, processing is stopped immediately and the `LatLngResultList` is returned. Default value is `TRUE`.
 
 #### Example
 ```php
@@ -99,10 +99,13 @@ $geo_coder = new \BumbalGeocode\GeoCoder(new \BumbalGeocode\GeoProviderList([
 ### GeoProviderOptions
 
 The `GeoProviderOptions` class currently has two options that determine the logging and error data returned in the `LatLngResultList` result. 
-Note that these options are set per provider, but their results are combined in the `LatLngResultList` result returned by `$geo_coder->getLatLngResultListFromAddress($address, $precision)`.
+Note that these options are set per provider, but their results are combined in the `LatLngResultList` result returned by `$geo_coder->getLatLngResultListFromAddress($address, $accuracy)`.
+
+It also has an `add_description` option for setting whether the returned individual `LatLngResult`s should contain a textual representation of the place they point to.
 
 - log_errors: Default value is `TRUE`.
 - log_debug: Default value is `FALSE`.
+- add_description: Default value is `FALSE`.
 
 #### Example
 ```php
@@ -167,7 +170,7 @@ For example: the result of a method named `getValuePositionOnMap` will have a we
 
 #### Example
 ```php
- $google_precision_analyser = new \BumbalGeocode\Providers\Google\GoogleGeoResponseAnalyser([
+ $google_accuracy_analyser = new \BumbalGeocode\Providers\Google\GoogleGeoResponseAnalyser([
     'result_types' => 1,
     'location_type' => 1,
     'address_components_equals' => 3,
@@ -175,7 +178,7 @@ For example: the result of a method named `getValuePositionOnMap` will have a we
     'bounding_box' => 2,
 ]);
 
-$google_provider = new \BumbalGeocode\Providers\Google\GoogleGeoProvider('google_maps_api_key', NULL, $google_precision_analyser);
+$google_provider = new \BumbalGeocode\Providers\Google\GoogleGeoProvider('google_maps_api_key', NULL, $google_accuracy_analyser);
 ```
 
 This means that in the final combined result, the result of the `getValueAddressComponentsSimilarity` method will be valued five times as high as the result of `getValueResultTypes`.

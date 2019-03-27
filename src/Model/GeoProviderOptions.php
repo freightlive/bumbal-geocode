@@ -14,6 +14,13 @@ class GeoProviderOptions {
      */
     public $log_debug = FALSE;
 
+
+    /**
+     * adds a description to each LatLngResult
+     * @var bool
+     */
+    public $add_description = FALSE;
+
     public function __construct(array $options = []) {
         foreach($options as $key => $value){
             if(property_exists($this, $key)){

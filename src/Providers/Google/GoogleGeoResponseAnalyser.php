@@ -51,7 +51,7 @@ class GoogleGeoResponseAnalyser extends GeoResponseAnalyser {
     ];
 
     /**
-     * GoogleGeoValueAnalyser constructor.
+     * GoogleGeoResponseAnalyser constructor.
      * @param array $weights
      */
     public function __construct(array $weights = []) {

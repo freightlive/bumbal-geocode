@@ -38,10 +38,10 @@ class GoogleGeoProvider implements GeoProvider
 
     /**
      * @param Address $address
-     * @param float $precision
+     * @param float $accuracy
      * @return LatLngResultList
      */
-    public function getLatLngResultListFromAddress(Address $address, float $precision){
+    public function getLatLngResultListFromAddress(Address $address, float $accuracy){
         $result = new LatLngResultList();
         $address_string = '';
 
@@ -49,7 +49,7 @@ class GoogleGeoProvider implements GeoProvider
             $address_string = $address->getAddressString();
 
             if($this->options->log_debug){
-                $result->setLogMessage('Google Maps API provider Geocoding invoked for address '.$address_string.' with precision '.$precision);
+                $result->setLogMessage('Google Maps API provider Geocoding invoked for address '.$address_string.' with accuracy '.$accuracy);
             }
 
             $google_result = $this->request($address_string);
@@ -63,14 +63,14 @@ class GoogleGeoProvider implements GeoProvider
 
             foreach($google_result['results'] as $single_google_result){
                 $single_result = $this->analyseResult($single_google_result, $address);
-                if($single_result->getPrecision() >= $precision){
+                if($single_result->getAccuracy() >= $accuracy){
                     $result->setLatLngResult($single_result);
                 }
 
             }
 
             if($this->options->log_debug){
-                $result->setLogMessage('Google Maps provider kept '.count($result).' result(s) for address '.$address_string.' with precision '.$precision);
+                $result->setLogMessage('Google Maps provider kept '.count($result).' result(s) for address '.$address_string.' with accuracy '.$accuracy);
             }
         } catch(\Exception $e){
             if($this->options->log_errors) {
@@ -112,8 +112,10 @@ class GoogleGeoProvider implements GeoProvider
         $result->setProviderName(self::PROVIDER_NAME);
         $result->setLatitude($data['geometry']['location']['lat']);
         $result->setLongitude($data['geometry']['location']['lng']);
-        $result->setPrecision($this->response_analyser->getValue($data, $address));
-        $result->setDescription($this->response_analyser->getAddressStringFromResult($data));
+        $result->setAccuracy($this->response_analyser->getValue($data, $address));
+        if($this->options->add_description) {
+            $result->setDescription($this->response_analyser->getAddressStringFromResult($data));
+        }
 
         return $result;
     }

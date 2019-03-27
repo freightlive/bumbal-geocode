@@ -72,7 +72,7 @@ class OSMGraphHopperGeoResponseAnalyser extends GeoResponseAnalyser{
          $osm_key = $osm_result['osm_key'];
          $osm_value = $osm_result['osm_value'];
 
-         //return max(array_intersect_key(self::PRECISION_OSM_RESULT_TYPES, array_flip([$osm_result['osm_type']])));
+         //return max(array_intersect_key(self::VALUE_OSM_RESULT_TYPES, array_flip([$osm_result['osm_type']])));
          return 0.0;
      }*/
 

@@ -124,7 +124,6 @@ class Address {
 
 
     /**
-     * @param Address $address
      * @return string
      * @throws \Exception
      */
@@ -148,6 +147,11 @@ class Address {
 
         if(!empty($missing_fields)) {
             throw new \Exception('Missing fields in Address: \'' . implode('\', \'', $missing_fields).'\'');
+        }
+
+        //ignore house_nr without street or zipcode
+        if(!empty($address_data['house_nr']) && empty($address_data['zipcode']) && empty($address_data['street'])){
+            unset($address_data['house_nr']);
         }
 
         $address_array = [
@@ -187,73 +191,106 @@ class Address {
         }
 
         $this_array = array_filter($this->toArray());
+        //we've already matched country, so unset
+        unset($this_array['iso_country']);
+
+        //ignore house_nr without street or zipcode
+        if(!empty($this_array['house_nr']) && empty($this_array['zipcode']) && empty($this_array['street'])){
+            unset($this_array['house_nr']);
+        }
+
         array_walk($this_array, function(&$value, $key, $normalize_callback){
             $value = $normalize_callback($key, $value);
         }, [$this, 'normalize']);
 
         $address_array = array_filter($address->toArray());
+        //we've already matched country, so unset
+        unset($address_array['iso_country']);
+
         array_walk($address_array, function(&$value, $key, $normalize_callback){
             $value = $normalize_callback($key, $value);
         }, [$this, 'normalize']);
 
         $elements_in_both = array_keys(array_intersect_key($this_array, $address_array));
 
-        $count_equal = 0;
+        //need to know how many extra elements $this has compared to $address.
+        $elements_only_in_this = array_keys(array_diff_key($this_array, $address_array));
+
+        //need to know how many extra elements $address has compared to $this. More bloat in the $address means a worse result.
+        $elements_only_in_address = array_keys(array_diff_key($address_array, $this_array));
+
+        //check how many elements match
         $elements_no_match = [];
+        $elements_match = [];
         foreach ($elements_in_both as $key) {
-            if($this_array[$key] == $address_array[$key]){
-                $count_equal++;
-            } else {
+            if($this_array[$key] != $address_array[$key]){
                 $elements_no_match[] = $key;
+            } else {
+                $elements_match[] = $key;
             }
         }
 
-        return $count_equal/count($this_array);
+        //if zipcode and house_nr match, street is perfectly fine in address
+        if(in_array('house_nr', $elements_match) && in_array('zipcode', $elements_match)){
+            $elements_only_in_address = array_diff($elements_only_in_address, ['street']);
+        }
 
+        //if street is a match, zipcode is perfectly fine in address
+        if(in_array('street', $elements_match)){
+            $elements_only_in_address = array_diff($elements_only_in_address, ['zipcode']);
+        }
 
-        var_dump($elements_in_both);
-        //$equals = array_walk($intersect_array)
+        if(empty($elements_no_match) && empty($elements_only_in_address) && empty($elements_only_in_this)){
+            //exact match
+            return 1.0;
+        }
 
-        die();
-        $this_city_normalized = trim(mb_strtolower($this->city));
-        $address_city_normalized = trim(mb_strtolower($address->getCity()));
-        $city_similarity = 0.0;
-        similar_text($this_city_normalized, $address_city_normalized, $city_similarity);
-        $city_similarity /= 100;
+        //matching elements score 1.0
+        $results = array_fill(0 , count($elements_match), 1.0 );
+        //elements only in $address score
+        $results = array_merge($results, array_fill(0 , count($elements_only_in_address), 0.5 ));
+        //elements only in $this score
+        $results = array_merge($results, array_fill(0 , count($elements_only_in_this), 0.5 ));
 
-        $this_street_normalized = trim(mb_strtolower($this->street));
-        $address_street_normalized = trim(mb_strtolower($address->getStreet()));
-        $street_similarity = 0.0;
-        similar_text($this_street_normalized, $address_street_normalized, $street_similarity);
-        $street_similarity /= 100;
+        //score elements that weren't an exact match
+        foreach($elements_no_match as $key){
+            switch($key){
+                case 'zipcode':
+                    //check how many characters of zipcode do match from the beginning
+                    $count = 0;
+                    foreach (str_split($this_array['zipcode']) as $character){
+                        if(empty($address_array['zipcode'][$count]) || $character != $address_array['zipcode'][$count]){
+                            break;
+                        }
+                        $count++;
+                    }
 
-        $this_house_nr_normalized = str_replace([' ','-','/'],'', mb_strtolower($this->house_nr));
-        $address_house_nr_normalized = str_replace([' ','-','/'],'', mb_strtolower($address->getHouseNr()));
+                    $results[] = $count/strlen($this_array['zipcode']);
+                    break;
+                case 'city':
+                    //check string similarity
+                    $results[] = $this->stringSimilarity($this_array['city'], $address_array['city']);
+                    break;
+                case 'street':
+                    //check street similarity
+                    $results[] = $this->stringSimilarity($this_array['street'], $address_array['street']);
+                    break;
+                case 'house_nr':
+                    //check how many characters of house_nr do match from the beginning
+                    $count = 0;
+                    foreach (str_split($this_array['house_nr']) as $character){
+                        if(empty($address_array['house_nr'][$count]) || $character != $address_array['house_nr'][$count]){
+                            break;
+                        }
+                        $count++;
+                    }
 
-        if(empty($this->house_nr)){
-            //closest we can match is zipcode or street/city
-            if(empty($this->zipcode) && empty($this->street)){
-                //closest we can match is city
-                return $city_similarity;
-            } elseif(empty($this->zipcode)){
-                //closest we can match is street/city
-                return $street_similarity * $city_similarity;
-            } else {
-                //closest we can match is zipcode (city is contained in zipcode)
-                return ($this->zipcode == $address->getZipcode() ? 1.0 : 0.0);
-            }
-        } else {
-            //house_nr is set. Closest we can match is zipcode/house_nr or street/house_nr/city
-            if(empty($this->zipcode) && empty($this->street)){
-                //closest we can match is city, house_nr is irrelevant without street or zipcode
-                return $city_similarity;
-            } elseif(empty($this->zipcode)){
-                //closest we can match is street/house_nr/city
-                return $street_similarity * $city_similarity * ($this_house_nr_normalized == $address_house_nr_normalized ? 1.0 : 0.0);
-            } else {
-                return ($this->zipcode == $address->getZipcode() ? 1.0 : 0.0) * ($this_house_nr_normalized == $address_house_nr_normalized ? 1.0 : 0.0);
+                    $results[] = $count/max(strlen($this_array['house_nr']),strlen($address_array['house_nr']));
+                    break;
             }
         }
+
+        return array_sum($results)/count($results);
     }
 
     /**
@@ -274,6 +311,11 @@ class Address {
         return $result/100;
     }
 
+    private function stringSimilarity(string $a, string $b){
+        $result = 0.0;
+        similar_text($a, $b, $result);
+        return $result / 100.0;
+    }
 
     private function normalize($key, $value){
         mb_internal_encoding('UTF-8');

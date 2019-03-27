@@ -12,7 +12,7 @@ class GeoResponseAnalyser {
     protected $valueKeys = [];
 
     /**
-     * GeoPrecisionAnalyser constructor.
+     * GeoResponseAnalyser constructor.
      * @param array $weights
      */
     public function __construct(array $weights = []) {
