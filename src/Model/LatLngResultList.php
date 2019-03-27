@@ -118,16 +118,16 @@ class LatLngResultList implements Iterator, Countable, ArrayAccess {
     }
 
     /**
-     * Order results based on precision
+     * Order results based on accuracy
      */
     private function orderLatLngResults(){
         usort($this->lat_lng_results, function(LatLngResult $a, LatLngResult $b){
-            $a_precision = $a->getPrecision();
-            $b_precision = $b->getPrecision();
-            if($a_precision == $b_precision){
+            $a_accuracy = $a->getAccuracy();
+            $b_accuracy = $b->getAccuracy();
+            if($a_accuracy == $b_accuracy){
                 return 0;
             }
-            return ($a_precision < $b_precision) ? 1 : -1;
+            return ($a_accuracy < $b_accuracy) ? 1 : -1;
         });
     }
 

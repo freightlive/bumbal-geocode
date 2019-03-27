@@ -12,7 +12,7 @@ class GeoResponseAnalyser {
     protected $valueKeys = [];
 
     /**
-     * GeoPrecisionAnalyser constructor.
+     * GeoResponseAnalyser constructor.
      * @param array $weights
      */
     public function __construct(array $weights = []) {
@@ -49,6 +49,10 @@ class GeoResponseAnalyser {
             return 0.0;
         }
         return array_sum($values_weighted)/$count_values;
+    }
+
+    public function getAddressStringFromResult(array $data){
+        return '';
     }
 
 

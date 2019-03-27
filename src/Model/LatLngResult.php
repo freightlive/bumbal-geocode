@@ -22,13 +22,18 @@ class LatLngResult {
      * found -> (0..1]
      * @var float
      */
-    protected $precision = 0.0;
+    protected $accuracy = 0.0;
 
     /**
      * @var string
      */
     protected $provider_name;
 
+    /**
+     * textual description of this place
+     * @var string
+     */
+    protected $description;
     /**
      * LatLngResult constructor.
      * @param array $data
@@ -70,17 +75,17 @@ class LatLngResult {
     }
 
     /**
-     * @param float $precision
+     * @param float $accuracy
      */
-    public function setPrecision(float $precision){
-        $this->precision = $precision;
+    public function setAccuracy(float $accuracy){
+        $this->accuracy = $accuracy;
     }
 
     /**
      * @return float
      */
-    public function getPrecision(){
-        return $this->precision;
+    public function getAccuracy(){
+        return $this->accuracy;
     }
 
     /**
@@ -95,5 +100,19 @@ class LatLngResult {
      */
     public function getProviderName(){
         return $this->provider_name;
+    }
+
+    /**
+     * @param string $description
+     */
+    public function setDescription(string $description){
+        $this->description = $description;
+    }
+
+    /**
+     * @return string
+     */
+    public function getDescription(){
+        return $this->description;
     }
 }
