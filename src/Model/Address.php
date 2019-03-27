@@ -199,6 +199,7 @@ class Address {
             unset($this_array['house_nr']);
         }
 
+        //normalize values, so we can compare more accurately
         array_walk($this_array, function(&$value, $key, $normalize_callback){
             $value = $normalize_callback($key, $value);
         }, [$this, 'normalize']);
@@ -207,6 +208,7 @@ class Address {
         //we've already matched country, so unset
         unset($address_array['iso_country']);
 
+        //normalize values, so we can compare more accurately
         array_walk($address_array, function(&$value, $key, $normalize_callback){
             $value = $normalize_callback($key, $value);
         }, [$this, 'normalize']);
@@ -230,12 +232,12 @@ class Address {
             }
         }
 
-        //if zipcode and house_nr match, street is perfectly fine in address
+        //if zipcode and house_nr match, street is perfectly fine to have in address
         if(in_array('house_nr', $elements_match) && in_array('zipcode', $elements_match)){
             $elements_only_in_address = array_diff($elements_only_in_address, ['street']);
         }
 
-        //if street is a match, zipcode is perfectly fine in address
+        //if street is a match, zipcode is perfectly fine to have in address
         if(in_array('street', $elements_match)){
             $elements_only_in_address = array_diff($elements_only_in_address, ['zipcode']);
         }
@@ -247,10 +249,10 @@ class Address {
 
         //matching elements score 1.0
         $results = array_fill(0 , count($elements_match), 1.0 );
-        //elements only in $address score
+        //elements only in $address
         $results = array_merge($results, array_fill(0 , count($elements_only_in_address), 0.5 ));
-        //elements only in $this score
-        $results = array_merge($results, array_fill(0 , count($elements_only_in_this), 0.5 ));
+        //elements only in $this
+        $results = array_merge($results, array_fill(0 , count($elements_only_in_this), 0.3 ));
 
         //score elements that weren't an exact match
         foreach($elements_no_match as $key){
@@ -289,7 +291,11 @@ class Address {
                     break;
             }
         }
-
+        /*var_dump($results);
+        var_dump($elements_only_in_address);
+        var_dump($elements_only_in_this);
+        var_dump($elements_no_match);
+        echo $address->getAddressString()."\n";*/
         return array_sum($results)/count($results);
     }
 

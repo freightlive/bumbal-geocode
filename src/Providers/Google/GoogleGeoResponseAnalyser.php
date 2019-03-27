@@ -15,6 +15,7 @@ class GoogleGeoResponseAnalyser extends GeoResponseAnalyser {
     const GOOGLE_RESULT_TYPE_SUBLOCALITY = 'sublocality';
     const GOOGLE_RESULT_TYPE_POSTAL_CODE = 'postal_code';
     const GOOGLE_RESULT_TYPE_COUNTRY = 'country';
+    const GOOGLE_RESULT_TYPE_ADMINISTRATIVE_AREA = 'administrative_area_level_2';
 
     /**
      * @todo tweak values
@@ -47,7 +48,8 @@ class GoogleGeoResponseAnalyser extends GeoResponseAnalyser {
         self::GOOGLE_RESULT_TYPE_ROUTE => 'street',
         self::GOOGLE_RESULT_TYPE_POSTAL_CODE => 'zipcode',
         self::GOOGLE_RESULT_TYPE_LOCALITY => 'city',
-        self::GOOGLE_RESULT_TYPE_COUNTRY => 'iso_country'
+        self::GOOGLE_RESULT_TYPE_COUNTRY => 'iso_country',
+        self::GOOGLE_RESULT_TYPE_ADMINISTRATIVE_AREA => 'city'
     ];
 
     /**
@@ -134,13 +136,17 @@ class GoogleGeoResponseAnalyser extends GeoResponseAnalyser {
      */
     private function makeAddressFromAddressComponents(array $address_components){
         $address_array = [];
+
         foreach($address_components as $component){
             $types = array_intersect($component['types'], array_keys(self::MAP_GOOGLE_ADDRESS_COMPONENT_TO_ADDRESS));
 
             if(!empty($types)){
-                $address_array[self::MAP_GOOGLE_ADDRESS_COMPONENT_TO_ADDRESS[$types[0]]] = $component['short_name'];
+                if(empty($address_array[self::MAP_GOOGLE_ADDRESS_COMPONENT_TO_ADDRESS[$types[0]]])) {
+                    $address_array[self::MAP_GOOGLE_ADDRESS_COMPONENT_TO_ADDRESS[$types[0]]] = $component['short_name'];
+                }
             }
         }
+
         return new Address($address_array);
     }
 
