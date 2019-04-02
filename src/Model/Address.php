@@ -274,7 +274,7 @@ class Address {
 
                     //city sometimes doesn't match, while rest of address is perfect. In that case, subtract less for not matching city
                     if(empty(array_diff(['zipcode', 'house_nr', 'street'], $elements_match))){
-                       $city_result = max($city_result, 0.8);
+                       $city_result = max($city_result, 0.6);
                     }
                     //check string similarity
                     $results[] = $city_result;
