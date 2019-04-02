@@ -31,7 +31,7 @@ Then run `composer install`
 
 Different providers can be fed into the GeoCoder through the `GeoProviderList` class. In priority order, these providers will try to geocode an `Address`.
 
-Results are given a accuracy value in the range 0 to 1. They can be filtered out by providing the threshold `$accuracy` parameter in `$geo_coder->getLatLngResultListFromAddress($address, $accuracy)`.
+Results are given an accuracy value in the range 0 to 1. They can be filtered out by providing the threshold `$accuracy` parameter in `$geo_coder->getLatLngResultListFromAddress($address, $accuracy)`.
 
 `$geo_coder->getLatLngResultListFromAddress($address, $accuracy)` returns a `LatLngResultList`, which is composed of a list of `LatLngResult` (in accuracy order) and optional log and errors.
 

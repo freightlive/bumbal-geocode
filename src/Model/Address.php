@@ -270,13 +270,13 @@ class Address {
                     $results[] = $count/strlen($this_array['zipcode']);
                     break;
                 case 'city':
+                    //check string similarity
                     $city_result = $this->stringSimilarity($this_array['city'], $address_array['city']);
 
                     //city sometimes doesn't match, while rest of address is perfect. In that case, subtract less for not matching city
                     if(empty(array_diff(['zipcode', 'house_nr', 'street'], $elements_match))){
                        $city_result = max($city_result, 0.6);
                     }
-                    //check string similarity
                     $results[] = $city_result;
                     break;
                 case 'street':
