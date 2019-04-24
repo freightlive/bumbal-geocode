@@ -115,4 +115,13 @@ class LatLngResult {
     public function getDescription(){
         return $this->description;
     }
+
+	/**
+	 * @return array
+	 */
+	public function toArray() {
+		$vars = get_object_vars($this);
+
+		return $vars;
+	}
 }
