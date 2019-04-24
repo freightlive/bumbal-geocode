@@ -8,7 +8,7 @@
     "homepage": "http://www.bumbal.eu",
     "license": "proprietary",
     "require": {
-        "php": ">=7.2",
+        "php": ">=7.1",
         "ext-curl": "*",
         "ext-json": "*",
         "ext-mbstring": "*"
