@@ -232,6 +232,37 @@ class Address {
             }
         }
 
+        //if house_nr was not set, it could be possible that house_nr is contained in street
+        if(in_array('house_nr', $elements_only_in_address) && in_array('street', $elements_no_match)){
+            //is house_nr exactly contained in street, and at the end?
+            if(mb_strrpos($this_array['street'], $address_array['house_nr']) === mb_strlen($this_array['street']) - mb_strlen($address_array['house_nr'])){
+                //split $this_array['street'] and do bookkeeping
+                $this_array['street'] = trim(str_replace($address_array['house_nr'], '', $this_array['street']));
+                $this_array['house_nr'] = $address_array['house_nr'];
+                $elements_only_in_address = array_diff($elements_only_in_address, ['house_nr']);
+                $elements_match[] = 'house_nr';
+            } elseif(mb_strpos($this_array['street'], $address_array['street']) === 0) {
+                //street is exactly contained at the start, change $address_array['house_nr'] from $elements_only_in_address to the end of $address_array['street']
+                //and do bookkeeping
+                $elements_only_in_address = array_diff($elements_only_in_address, ['house_nr']);
+                $address_array['street'] = $address_array['street'].' '.$address_array['house_nr'];
+            } else {
+                //street and house_nr are both not contained. Don't mess with existing street data, but introduce new element to text compare
+                $elements_only_in_address = array_diff($elements_only_in_address, ['house_nr']);
+                $address_array['street-alt'] = $address_array['street'].' '.$address_array['house_nr'];
+                $this_array['street-alt'] = $this_array['street'];
+                $elements_no_match[] = 'street-alt';
+            }
+
+            //exact match for street now?
+            if($address_array['street'] == $this_array['street']){
+                //do bookkeeping
+                $elements_no_match = array_diff($elements_no_match, ['street']);
+                $elements_match[] = 'street';
+            }
+            //else let $elements_no_match street compare handle it to score text similarity
+        }
+
         //if zipcode and house_nr match, street is perfectly fine to have in address
         if(in_array('house_nr', $elements_match) && in_array('zipcode', $elements_match)){
             $elements_only_in_address = array_diff($elements_only_in_address, ['street']);
@@ -295,6 +326,8 @@ class Address {
 
                     $results[] = $count/max(strlen($this_array['house_nr']),strlen($address_array['house_nr']));
                     break;
+                default:
+                    $results[] = $this->stringSimilarity($this_array[$key], $address_array[$key]);
             }
         }
         /*var_dump($results);
