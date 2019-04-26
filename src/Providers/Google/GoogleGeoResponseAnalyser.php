@@ -56,11 +56,11 @@ class GoogleGeoResponseAnalyser extends GeoResponseAnalyser {
      * GoogleGeoResponseAnalyser constructor.
      * @param array $weights
      */
-    public function __construct(array $weights = []) {
+    public function __construct(/*array*/ $weights = []) {
         parent::__construct($weights);
     }
 
-    public function getAddressStringFromResult(array $data){
+    public function getAddressStringFromResult(/*array*/ $data){
         return $this->makeAddressFromAddressComponents($data['address_components'])->getAddressString();
     }
 
@@ -69,7 +69,7 @@ class GoogleGeoResponseAnalyser extends GeoResponseAnalyser {
      * @param Address $address
      * @return float
      */
-    protected function getValueResultTypes(array $google_result, Address $address){
+    protected function getValueResultTypes(/*array*/ $google_result, Address $address){
         return max(array_intersect_key(self::VALUE_GOOGLE_RESULT_TYPES, array_flip($google_result['types'])));
     }
 
@@ -78,7 +78,7 @@ class GoogleGeoResponseAnalyser extends GeoResponseAnalyser {
      * @param Address $address
      * @return float
      */
-    protected function getValueLocationType(array $google_result, Address $address){
+    protected function getValueLocationType(/*array*/ $google_result, Address $address){
         if(self::VALUE_GOOGLE_LOCATION_TYPES[$google_result['geometry']['location_type']] !== null){
             return self::VALUE_GOOGLE_LOCATION_TYPES[$google_result['geometry']['location_type']];
         }
@@ -90,7 +90,7 @@ class GoogleGeoResponseAnalyser extends GeoResponseAnalyser {
      * @param Address $address
      * @return float
      */
-    protected function getValueAddressComponentsCompare(array $google_result, Address $address){
+    protected function getValueAddressComponentsCompare(/*array*/ $google_result, Address $address){
         $address_from_google = $this->makeAddressFromAddressComponents($google_result['address_components']);
         return $address->compare($address_from_google);
     }
@@ -101,7 +101,7 @@ class GoogleGeoResponseAnalyser extends GeoResponseAnalyser {
      * @param Address $address
      * @return float
      */
-    protected function getValueAddressComponentsSimilarity(array $google_result, Address $address){
+    protected function getValueAddressComponentsSimilarity(/*array*/ $google_result, Address $address){
         $address_from_google = $this->makeAddressFromAddressComponents($google_result['address_components']);
         return $address->similarity($address_from_google);
     }
@@ -111,7 +111,7 @@ class GoogleGeoResponseAnalyser extends GeoResponseAnalyser {
      * @param Address $address
      * @return float
      */
-     protected function getValueBoundingBox(array $google_result, Address $address){
+     protected function getValueBoundingBox(/*array*/ $google_result, Address $address){
          //no bounds in result, so result is a point
          if(empty($google_result['geometry']['bounds'])){
              return 1.0;
@@ -134,7 +134,7 @@ class GoogleGeoResponseAnalyser extends GeoResponseAnalyser {
      * @param array $address_components
      * @return Address
      */
-    private function makeAddressFromAddressComponents(array $address_components){
+    private function makeAddressFromAddressComponents(/*array*/ $address_components){
         $address_array = [];
 
         foreach($address_components as $component){
