@@ -28,7 +28,7 @@ class GeoCoder {
      * @param float $accuracy
      * @return LatLngResultList
      */
-    public function getLatLngResultListFromAddress(Address $address, float $accuracy){
+    public function getLatLngResultListFromAddress(Address $address, /*float*/ $accuracy){
         $result = new LatLngResultList();
         foreach($this->providers as $provider){
             $provider_result = $provider->getLatLngResultListFromAddress($address, $accuracy, $this->options);
