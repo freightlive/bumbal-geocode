@@ -44,11 +44,11 @@ class OSMGraphHopperGeoResponseAnalyser extends GeoResponseAnalyser{
      * OSMGraphHopperGeoResponseAnalyser constructor.
      * @param array $weights
      */
-    public function __construct(array $weights = []) {
+    public function __construct(/*array*/ $weights = []) {
         parent::__construct($weights);
     }
 
-    public function getAddressStringFromResult(array $data){
+    public function getAddressStringFromResult(/*array*/ $data){
         return $this->makeAddressFromAddressComponents($data)->getAddressString();
     }
 
@@ -57,7 +57,7 @@ class OSMGraphHopperGeoResponseAnalyser extends GeoResponseAnalyser{
      * @param Address $address
      * @return float
      */
-    protected function getValueResultType(array $osm_result, Address $address){
+    protected function getValueResultType(/*array*/ $osm_result, Address $address){
         return max(array_intersect_key(self::VALUE_OSM_RESULT_TYPES, array_flip([$osm_result['osm_type']])));
     }
 
@@ -81,7 +81,7 @@ class OSMGraphHopperGeoResponseAnalyser extends GeoResponseAnalyser{
      * @param Address $address
      * @return float
      */
-    protected function getValueAddressComponentsCompare(array $osm_result, Address $address){
+    protected function getValueAddressComponentsCompare(/*array*/ $osm_result, Address $address){
         $address_from_osm = $this->makeAddressFromAddressComponents($osm_result);
 
         $result = $address->compare($address_from_osm);
@@ -93,7 +93,7 @@ class OSMGraphHopperGeoResponseAnalyser extends GeoResponseAnalyser{
      * @param Address $address
      * @return float
      */
-    protected function getValueAddressComponentsSimilarity(array $osm_result, Address $address){
+    protected function getValueAddressComponentsSimilarity(/*array*/ $osm_result, Address $address){
         $address_from_osm = $this->makeAddressFromAddressComponents($osm_result);
         return $address->similarity($address_from_osm);
     }
@@ -103,7 +103,7 @@ class OSMGraphHopperGeoResponseAnalyser extends GeoResponseAnalyser{
      * @param Address $address
      * @return float
      */
-    protected function getValueBoundingBox(array $osm_result, Address $address){
+    protected function getValueBoundingBox(/*array*/ $osm_result, Address $address){
         //no bounds in result, so result is a point
         if(empty($osm_result['extent'])){
             return 1.0;
@@ -128,7 +128,7 @@ class OSMGraphHopperGeoResponseAnalyser extends GeoResponseAnalyser{
      * @param array $osm_result
      * @return Address
      */
-    private function makeAddressFromAddressComponents(array $osm_result){
+    private function makeAddressFromAddressComponents(/*array*/ $osm_result){
         $address_array = [];
         foreach(self::MAP_OSM_ADDRESS_COMPONENT_TO_ADDRESS as $osm_key => $address_key){
             if(!empty($osm_result[$osm_key])){
