@@ -19,7 +19,7 @@ class GeoProviderList implements Iterator, Countable {
      */
     protected $container = [];
 
-    public function __construct(array $providers = []) {
+    public function __construct(/*array*/ $providers = []) {
         $this->container = $providers;
         foreach($providers as $priority => $provider){
             $this->priorities[$priority] = [$provider];
@@ -31,7 +31,7 @@ class GeoProviderList implements Iterator, Countable {
      * @param GeoProvider $provider
      * @param int $priority
      */
-    public function setProvider(GeoProvider $provider, int $priority = 0){
+    public function setProvider(GeoProvider $provider, /*int*/ $priority = 0){
         //make priority a value equal/greater than 0
         $priority = max(0, $priority);
         if(empty($this->priorities[$priority])){
@@ -50,7 +50,7 @@ class GeoProviderList implements Iterator, Countable {
      * @param int $index
      * @return GeoProvider|null
      */
-    public function getProvider(int $index){
+    public function getProvider(/*int*/ $index){
         if(!empty($this->container[$index])){
             return $this->container[$index];
         }
@@ -61,7 +61,7 @@ class GeoProviderList implements Iterator, Countable {
      * @param int|NULL $priority
      * @return array|mixed
      */
-    public function getProviders(int $priority = NULL){
+    public function getProviders(/*int*/ $priority = NULL){
         if($priority === NULL) {
             return $this->container;
         } else {
