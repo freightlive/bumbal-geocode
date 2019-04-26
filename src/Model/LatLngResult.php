@@ -38,7 +38,7 @@ class LatLngResult {
      * LatLngResult constructor.
      * @param array $data
      */
-    public function __construct(array $data = []){
+    public function __construct(/*array*/ $data = []){
         foreach($data as $key => $value){
             if(property_exists($this, $key)){
                 $this->$key = $value;
@@ -49,7 +49,7 @@ class LatLngResult {
     /**
      * @param float $latitude
      */
-    public function setLatitude(float $latitude){
+    public function setLatitude(/*float*/ $latitude){
         $this->latitude = $latitude;
     }
 
@@ -63,7 +63,7 @@ class LatLngResult {
     /**
      * @param float $longitude
      */
-    public function setLongitude(float $longitude){
+    public function setLongitude(/*float*/ $longitude){
         $this->longitude = $longitude;
     }
 
@@ -77,7 +77,7 @@ class LatLngResult {
     /**
      * @param float $accuracy
      */
-    public function setAccuracy(float $accuracy){
+    public function setAccuracy(/*float*/ $accuracy){
         $this->accuracy = $accuracy;
     }
 
@@ -91,7 +91,7 @@ class LatLngResult {
     /**
      * @param string $provider_name
      */
-    public function setProviderName(string $provider_name){
+    public function setProviderName(/*string*/ $provider_name){
         $this->provider_name = $provider_name;
     }
 
@@ -105,7 +105,7 @@ class LatLngResult {
     /**
      * @param string $description
      */
-    public function setDescription(string $description){
+    public function setDescription(/*string*/ $description){
         $this->description = $description;
     }
 
