@@ -29,7 +29,7 @@ class LatLngResultList implements Iterator, Countable, ArrayAccess {
      * LatLngResultList constructor.
      * @param array $lat_lng_results
      */
-    public function __construct(array $lat_lng_results = []) {
+    public function __construct(/*array*/ $lat_lng_results = []) {
         $this->lat_lng_results = $lat_lng_results;
     }
 
@@ -55,7 +55,7 @@ class LatLngResultList implements Iterator, Countable, ArrayAccess {
     /**
      * @param array $lat_lng_results
      */
-    public function setLatLngResults(array $lat_lng_results){
+    public function setLatLngResults(/*array*/ $lat_lng_results){
         $this->lat_lng_results = $lat_lng_results;
         $this->orderLatLngResults();
     }
@@ -77,14 +77,14 @@ class LatLngResultList implements Iterator, Countable, ArrayAccess {
     /**
      * @param string $message
      */
-    public function setLogMessage(string $message){
+    public function setLogMessage(/*string*/ $message){
         $this->log[] = $message;
     }
 
     /**
      * @param array $messages
      */
-    public function setLog(array $messages){
+    public function setLog(/*array*/ $messages){
         $this->log = $messages;
     }
 
@@ -99,14 +99,14 @@ class LatLngResultList implements Iterator, Countable, ArrayAccess {
     /**
      * @param string $message
      */
-    public function setError(string $message){
+    public function setError(/*string*/ $message){
         $this->errors[] = $message;
     }
 
     /**
      * @param array $messages
      */
-    public function setErrors(array $messages){
+    public function setErrors(/*array*/ $messages){
         $this->errors = $messages;
     }
 
