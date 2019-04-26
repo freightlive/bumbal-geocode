@@ -79,7 +79,7 @@ class GoogleGeoResponseAnalyser extends GeoResponseAnalyser {
      * @return float
      */
     protected function getValueLocationType(array $google_result, Address $address){
-        if(isset(self::VALUE_GOOGLE_LOCATION_TYPES[$google_result['geometry']['location_type']])){
+        if(self::VALUE_GOOGLE_LOCATION_TYPES[$google_result['geometry']['location_type']] !== null){
             return self::VALUE_GOOGLE_LOCATION_TYPES[$google_result['geometry']['location_type']];
         }
         return 0.0;
