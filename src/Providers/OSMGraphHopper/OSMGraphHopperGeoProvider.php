@@ -25,7 +25,7 @@ class OSMGraphHopperGeoProvider implements GeoProvider {
      * @param GeoProviderOptions|NULL $options
      * @param GeoResponseAnalyser $response_analyser
      */
-    public function __construct(string $api_key, GeoProviderOptions $options = NULL, GeoResponseAnalyser $response_analyser = NULL) {
+    public function __construct(/*string*/ $api_key, GeoProviderOptions $options = NULL, GeoResponseAnalyser $response_analyser = NULL) {
         $this->api_key = $api_key;
         $this->options = ($options ? $options : new GeoProviderOptions());
         $this->response_analyser = ($response_analyser ? $response_analyser : new OSMGraphHopperGeoResponseAnalyser());
@@ -36,7 +36,7 @@ class OSMGraphHopperGeoProvider implements GeoProvider {
      * @param float $accuracy
      * @return LatLngResultList
      */
-    public function getLatLngResultListFromAddress(Address $address, float $accuracy){
+    public function getLatLngResultListFromAddress(Address $address, /*float*/ $accuracy){
         $result = new LatLngResultList();
         $address_string = '';
 
@@ -84,7 +84,7 @@ class OSMGraphHopperGeoProvider implements GeoProvider {
      * @return bool
      * @throws \Exception
      */
-    private function validateResult(array $data){
+    private function validateResult(/*array*/ $data){
         /*if(empty($data['hits'])){
             throw new \Exception('GraphHopper API did not return a result');
         }*/
@@ -96,7 +96,7 @@ class OSMGraphHopperGeoProvider implements GeoProvider {
      * @return LatLngResult
      * @throws \Exception
      */
-    private function analyseResult(array $data, Address $address){
+    private function analyseResult(/*array*/ $data, Address $address){
 
         $result = new LatLngResult();
         $result->setProviderName(self::PROVIDER_NAME);
@@ -115,7 +115,7 @@ class OSMGraphHopperGeoProvider implements GeoProvider {
      * @return array mixed
      * @throws \Exception
      */
-    private function request(string $address_string) {
+    private function request(/*string*/ $address_string) {
         $url = str_replace(['{{address}}', '{{apikey}}'], [urlencode($address_string), $this->api_key], self::URL);
 
         $channel = curl_init();
