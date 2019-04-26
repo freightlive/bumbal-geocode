@@ -33,7 +33,7 @@ class Address {
      * Address constructor.
      * @param array $data
      */
-    public function __construct(array $data = []){
+    public function __construct(/*array*/ $data = []){
         foreach($data as $key => $value){
             if(property_exists($this, $key)){
                 switch($key){
@@ -54,7 +54,7 @@ class Address {
     /**
      * @param string $street
      */
-    public function setStreet(string $street){
+    public function setStreet(/*string*/ $street){
         $this->street = trim($street);
     }
 
@@ -68,7 +68,7 @@ class Address {
     /**
      * @param string $house_nr
      */
-    public function setHouseNr(string $house_nr){
+    public function setHouseNr(/*string*/ $house_nr){
         $this->house_nr = trim($house_nr);
     }
 
@@ -90,7 +90,7 @@ class Address {
     /**
      * @param string $city
      */
-    public function setCity(string $city){
+    public function setCity(/*string*/ $city){
         $this->city = trim($city);
     }
 
@@ -104,7 +104,7 @@ class Address {
     /**
      * @param string $iso_country
      */
-    public function setIsoCountry(string $iso_country){
+    public function setIsoCountry(/*string*/ $iso_country){
         $this->iso_country = $this->normalize('iso_country', trim($iso_country));
     }
 
@@ -118,7 +118,7 @@ class Address {
     /**
      * @param string $zipcode
      */
-    public function setZipcode(string $zipcode){
+    public function setZipcode(/*string*/ $zipcode){
         $this->zipcode = $this->normalize('zipcode', trim($zipcode));
     }
 
@@ -356,7 +356,7 @@ class Address {
         return $result/100;
     }
 
-    private function stringSimilarity(string $a, string $b){
+    private function stringSimilarity(/*string*/ $a, /*string*/ $b){
         $result = 0.0;
         similar_text($a, $b, $result);
         return $result / 100.0;
