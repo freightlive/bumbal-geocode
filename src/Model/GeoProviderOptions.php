@@ -21,7 +21,7 @@ class GeoProviderOptions {
      */
     public $add_description = FALSE;
 
-    public function __construct(array $options = []) {
+    public function __construct(/*array*/ $options = []) {
         foreach($options as $key => $value){
             if(property_exists($this, $key)){
                 $this->$key = $value;
