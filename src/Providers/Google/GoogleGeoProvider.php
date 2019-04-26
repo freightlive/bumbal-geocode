@@ -30,7 +30,7 @@ class GoogleGeoProvider implements GeoProvider
      * @param GeoProviderOptions|NULL $options
      * @param GeoResponseAnalyser|NULL $response_analyser
      */
-    public function __construct(string $api_key, GeoProviderOptions $options = NULL, GeoResponseAnalyser $response_analyser = NULL) {
+    public function __construct(/*string*/ $api_key, GeoProviderOptions $options = NULL, GeoResponseAnalyser $response_analyser = NULL) {
         $this->api_key = $api_key;
         $this->options = ($options ? $options : new GeoProviderOptions());
         $this->response_analyser = ($response_analyser ? $response_analyser : new GoogleGeoResponseAnalyser());
@@ -91,7 +91,7 @@ class GoogleGeoProvider implements GeoProvider
      * @return bool
      * @throws \Exception
      */
-    private function validateResult(array $data){
+    private function validateResult(/*array*/ $data){
         if(empty($data['status']) || !in_array($data['status'], self::GOOGLE_STATUS_ACCEPTED)){
             throw new \Exception('Google maps API returned Status Code: '.$data['status']);
         }
@@ -107,7 +107,7 @@ class GoogleGeoProvider implements GeoProvider
      * @return LatLngResult
      * @throws \Exception
      */
-    private function analyseResult(array $data, Address $address){
+    private function analyseResult(/*array*/ $data, Address $address){
         $result = new LatLngResult();
         $result->setProviderName(self::PROVIDER_NAME);
         $result->setLatitude($data['geometry']['location']['lat']);
@@ -125,7 +125,7 @@ class GoogleGeoProvider implements GeoProvider
      * @return array mixed
      * @throws \Exception
      */
-    private function request(string $address_string) {
+    private function request(/*string*/ $address_string) {
         $url = str_replace(['{{address}}', '{{apikey}}'], [urlencode($address_string), $this->api_key], self::URL);
         $channel = curl_init();
 
