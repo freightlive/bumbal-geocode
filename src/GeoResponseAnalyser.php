@@ -15,7 +15,7 @@ class GeoResponseAnalyser {
      * GeoResponseAnalyser constructor.
      * @param array $weights
      */
-    public function __construct(array $weights = []) {
+    public function __construct(/*array*/ $weights = []) {
         $this->init();
         $this->setWeights($weights);
     }
@@ -25,7 +25,7 @@ class GeoResponseAnalyser {
      * @param Address $address
      * @return float
      */
-    public function getValue(array $data, Address $address){
+    public function getValue(/*array*/ $data, Address $address){
 
         $values = [];
         foreach($this->valueMethodNames as $index => $method_name){
@@ -51,7 +51,7 @@ class GeoResponseAnalyser {
         return array_sum($values_weighted)/$count_values;
     }
 
-    public function getAddressStringFromResult(array $data){
+    public function getAddressStringFromResult(/*array*/ $data){
         return '';
     }
 
@@ -73,7 +73,7 @@ class GeoResponseAnalyser {
      * sets weights and all uninitialized weights to 0
      * @param array $weights
      */
-    public function setWeights(array $weights = []){
+    public function setWeights(/*array*/ $weights = []){
 
         foreach($this->valueKeys as $key){
             if(isset($weights[$key])){
