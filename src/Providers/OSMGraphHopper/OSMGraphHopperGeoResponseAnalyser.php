@@ -52,6 +52,10 @@ class OSMGraphHopperGeoResponseAnalyser extends GeoResponseAnalyser{
         return $this->makeAddressFromAddressComponents($data)->getAddressString();
     }
 
+    public function getAddressFromResult(/*array*/ $data){
+        return $this->makeAddressFromAddressComponents($data);
+    }
+
     /**
      * @param array $osm_result
      * @param Address $address

@@ -64,6 +64,10 @@ class GoogleGeoResponseAnalyser extends GeoResponseAnalyser {
         return $this->makeAddressFromAddressComponents($data['address_components'])->getAddressString();
     }
 
+    public function getAddressFromResult(/*array*/ $data){
+        return $this->makeAddressFromAddressComponents($data['address_components']);
+    }
+
     /**
      * @param array $google_result
      * @param Address $address

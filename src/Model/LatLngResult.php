@@ -34,6 +34,12 @@ class LatLngResult {
      * @var string
      */
     protected $description;
+
+    /**
+     * @var Address
+     */
+    protected $address;
+
     /**
      * LatLngResult constructor.
      * @param array $data
@@ -114,6 +120,20 @@ class LatLngResult {
      */
     public function getDescription(){
         return $this->description;
+    }
+
+    /**
+     * @param Address $address
+     */
+    public function setAddress(/*Address*/ $address){
+        $this->address = $address;
+    }
+
+    /**
+     * @return Address
+     */
+    public function getAddress(){
+        return $this->address;
     }
 
 	/**

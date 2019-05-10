@@ -106,6 +106,9 @@ class OSMGraphHopperGeoProvider implements GeoProvider {
         if($this->options->add_description) {
             $result->setDescription($this->response_analyser->getAddressStringFromResult($data));
         }
+        if($this->options->add_address) {
+            $result->setAddress($this->response_analyser->getAddressFromResult($data));
+        }
 
         return $result;
     }
