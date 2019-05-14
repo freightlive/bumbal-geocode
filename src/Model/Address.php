@@ -301,13 +301,21 @@ class Address {
                     $results[] = $count/strlen($this_array['zipcode']);
                     break;
                 case 'city':
+                    $city_result = 0.0;
+                    //check if city is contained in result city (Gilze-Rijen, Son en Breugel)
+                    $city_parts = preg_split("/( |-)/", $address_array['city']);
+                    if(in_array($this_array['city'], $city_parts)){
+                        $city_result = 0.9;
+                    }
+
                     //check string similarity
-                    $city_result = $this->stringSimilarity($this_array['city'], $address_array['city']);
+                    $city_result = max($city_result, $this->stringSimilarity($this_array['city'], $address_array['city']));
 
                     //city sometimes doesn't match, while rest of address is perfect. In that case, subtract less for not matching city
                     if(empty(array_diff(['zipcode', 'house_nr', 'street'], $elements_match))){
                        $city_result = max($city_result, 0.6);
                     }
+
                     $results[] = $city_result;
                     break;
                 case 'street':
