@@ -102,10 +102,12 @@ The `GeoProviderOptions` class currently has two options that determine the logg
 Note that these options are set per provider, but their results are combined in the `LatLngResultList` result returned by `$geo_coder->getLatLngResultListFromAddress($address, $accuracy)`.
 
 It also has an `add_description` option for setting whether the returned individual `LatLngResult`s should contain a textual representation of the place they point to.
+The `add_address` option determines if an address object should be set on the result. 
 
 - log_errors: Default value is `TRUE`.
 - log_debug: Default value is `FALSE`.
 - add_description: Default value is `FALSE`.
+- add_address: Default value is `FALSE`.
 
 #### Example
 ```php
