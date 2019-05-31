@@ -32,14 +32,13 @@ class GeoCoder {
         $result = new LatLngResultList();
         foreach($this->providers as $provider){
             $provider_result = $provider->getLatLngResultListFromAddress($address, $accuracy, $this->options);
+            $result->merge($provider_result);
             if($this->options->quit_on_error && $provider_result->hasErrors()){
-                return $provider_result;
+                return $result;
             }
 
             if($this->options->quit_after_first_result && count($provider_result) > 0){
-                return $provider_result;
-            } else {
-                $result->merge($provider_result);
+                return $result;
             }
         }
 
