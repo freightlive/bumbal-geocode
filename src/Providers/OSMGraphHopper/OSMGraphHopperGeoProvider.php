@@ -85,9 +85,13 @@ class OSMGraphHopperGeoProvider implements GeoProvider {
      * @throws \Exception
      */
     private function validateResult(/*array*/ $data){
-        /*if(empty($data['hits'])){
-            throw new \Exception('GraphHopper API did not return a result');
-        }*/
+        if($data['code'] != 200){
+            if(!empty($data['message'])) {
+                throw new \Exception('GraphHopper OSM '.$data['message']);
+            } else {
+                throw new \Exception('GraphHopper OSM returned HTTP code '.$data['code']);
+            }
+        }
         return TRUE;
     }
 
@@ -135,7 +139,10 @@ class OSMGraphHopperGeoProvider implements GeoProvider {
         if (curl_errno($channel)) {
             throw new \Exception('GraphHopper API request failed. Curl returned error code ' . curl_errno($channel));
         }
+        $httpcode = curl_getinfo($channel, CURLINFO_HTTP_CODE);
 
-        return json_decode($response, TRUE);
+        $response_obj = json_decode($response, TRUE);
+        $response_obj['code'] = $httpcode;
+        return $response_obj;
     }
 }
