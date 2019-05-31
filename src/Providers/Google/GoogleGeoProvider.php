@@ -108,8 +108,10 @@ class GoogleGeoProvider implements GeoProvider
      * @throws \Exception
      */
     private function analyseResult(/*array*/ $data, Address $address){
+
         $result = new LatLngResult();
         $result->setProviderName(self::PROVIDER_NAME);
+        $result->setProviderId($data['place_id']);
         $result->setLatitude($data['geometry']['location']['lat']);
         $result->setLongitude($data['geometry']['location']['lng']);
         $result->setAccuracy($this->response_analyser->getValue($data, $address));

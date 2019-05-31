@@ -4,7 +4,7 @@ Bumbal GeoCoder for turning address data into coordinates.
 
 ## Requirements
 
-PHP 7 and later
+PHP 5.6 and later
 
 ## Installation & Usage
 ### Composer

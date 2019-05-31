@@ -30,6 +30,11 @@ class LatLngResult {
     protected $provider_name;
 
     /**
+     * @var string
+     */
+    protected $provider_id;
+
+    /**
      * textual description of this place
      * @var string
      */
@@ -106,6 +111,21 @@ class LatLngResult {
      */
     public function getProviderName(){
         return $this->provider_name;
+    }
+
+
+    /**
+     * @param string $provider_name
+     */
+    public function setProviderId(/*string*/ $provider_id){
+        $this->provider_id = $provider_id;
+    }
+
+    /**
+     * @return string
+     */
+    public function getProviderId(){
+        return $this->provider_id;
     }
 
     /**

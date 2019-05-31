@@ -104,6 +104,7 @@ class OSMGraphHopperGeoProvider implements GeoProvider {
 
         $result = new LatLngResult();
         $result->setProviderName(self::PROVIDER_NAME);
+        $result->setProviderId((string)$data['osm_id']);
         $result->setLatitude($data['point']['lat']);
         $result->setLongitude($data['point']['lng']);
         $result->setAccuracy($this->response_analyser->getValue($data, $address));
