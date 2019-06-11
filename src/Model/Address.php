@@ -40,6 +40,7 @@ class Address {
                     case 'zipcode':
                     case 'iso_country':
                         $this->$key = $this->normalize($key, trim($value));
+                        break;
                     default:
                         $this->$key = trim($value);
                 }
@@ -127,7 +128,7 @@ class Address {
      * @return string
      * @throws \Exception
      */
-    public function getAddressString(){
+    public function getAddressString($exclude_iso_country = false){
 
         $address_data = $this->toArray();
 
@@ -162,7 +163,7 @@ class Address {
             [
                 empty($address_data['zipcode'])?'':$address_data['zipcode'],
                 empty($address_data['city'])?'':$address_data['city'],
-                empty($address_data['iso_country'])?'':$address_data['iso_country']
+                (empty($address_data['iso_country']) || $exclude_iso_country)?'':$address_data['iso_country']
             ],
         ];
 
