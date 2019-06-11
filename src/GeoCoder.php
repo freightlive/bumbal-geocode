@@ -31,14 +31,16 @@ class GeoCoder {
     public function getLatLngResultListFromAddress(Address $address, /*float*/ $accuracy){
         $result = new LatLngResultList();
         foreach($this->providers as $provider){
-            $provider_result = $provider->getLatLngResultListFromAddress($address, $accuracy, $this->options);
-            $result->merge($provider_result);
-            if($this->options->quit_on_error && $provider_result->hasErrors()){
-                return $result;
-            }
+            if($provider->useForAddress($address)) {
+                $provider_result = $provider->getLatLngResultListFromAddress($address, $accuracy, $this->options);
+                $result->merge($provider_result);
+                if ($this->options->quit_on_error && $provider_result->hasErrors()) {
+                    return $result;
+                }
 
-            if($this->options->quit_after_first_result && count($provider_result) > 0){
-                return $result;
+                if ($this->options->quit_after_first_result && count($provider_result) > 0) {
+                    return $result;
+                }
             }
         }
 

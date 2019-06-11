@@ -149,4 +149,8 @@ class GoogleGeoProvider implements GeoProvider
         return json_decode($response, TRUE);
     }
 
+    public function useForAddress(Address $address){
+        return TRUE;
+    }
+
 }
