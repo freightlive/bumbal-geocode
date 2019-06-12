@@ -39,7 +39,7 @@ class GeoPuntBEGeoResponseAnalyser extends GeoResponseAnalyser {
     protected function getValueAddressComponentsCompare(/*array*/ $geopunt_result, Address $address){
         $address_from_geopunt = $this->makeAddressFromAddressComponents($geopunt_result);
 
-        return $address->compare($address_from_geopunt);
+        return $address->compare($address_from_geopunt, ['city']);
     }
 
     /**
