@@ -1,39 +1,33 @@
 <?php
 
-namespace BumbalGeocode\Providers\Google;
+
+namespace BumbalGeocode\Providers\GeoPuntBE;
 
 use BumbalGeocode\GeoProvider;
 use BumbalGeocode\GeoResponseAnalyser;
+use BumbalGeocode\Model\GeoProviderOptions;
 use BumbalGeocode\Model\Address;
 use BumbalGeocode\Model\LatLngResult;
 use BumbalGeocode\Model\LatLngResultList;
-use BumbalGeocode\Model\GeoProviderOptions;
 
-class GoogleGeoProvider implements GeoProvider
-{
-    const URL = 'https://maps.googleapis.com/maps/api/geocode/json?address={{address}}&key={{apikey}}';
 
-    const GOOGLE_STATUS_ACCEPTED = [
-        'ZERO_RESULTS',
-        'OK'
-    ];
+class GeoPuntBEGeoProvider implements GeoProvider {
 
-    const PROVIDER_NAME = 'google_maps';
+    const URL = 'https://loc.geopunt.be/geolocation/location?q={{address}}';
+    const PROVIDER_NAME = 'geopunt_be';
+    const ISO_COUNTRY = 'BE';
 
-    private $api_key;
     private $options;
     private $response_analyser;
 
     /**
-     * GoogleGeoProvider constructor.
-     * @param string $api_key
+     * GeoPuntBEGeoProvider constructor.
      * @param GeoProviderOptions|NULL $options
      * @param GeoResponseAnalyser|NULL $response_analyser
      */
-    public function __construct(/*string*/ $api_key, GeoProviderOptions $options = NULL, GeoResponseAnalyser $response_analyser = NULL) {
-        $this->api_key = $api_key;
+    public function __construct(GeoProviderOptions $options = NULL, GeoResponseAnalyser $response_analyser = NULL) {
         $this->options = ($options ? $options : new GeoProviderOptions());
-        $this->response_analyser = ($response_analyser ? $response_analyser : new GoogleGeoResponseAnalyser());
+        $this->response_analyser = ($response_analyser ? $response_analyser : new GeoPuntBEGeoResponseAnalyser());
     }
 
     /**
@@ -46,23 +40,22 @@ class GoogleGeoProvider implements GeoProvider
         $address_string = '';
 
         try {
-            $address_string = $address->getAddressString();
+            $address_string = $address->getAddressString(true);
 
             if($this->options->log_debug){
-                $result->setLogMessage('Google Maps API provider Geocoding invoked for address '.$address_string.' with accuracy '.$accuracy);
+                $result->setLogMessage('GeoPuntBE API provider Geocoding invoked for address '.$address_string.' with accuracy '.$accuracy);
             }
 
-            $google_result = $this->request($address_string);
-
-            $this->validateResult($google_result);
+            $geo_punt_be_result = $this->request($address_string);
+            $this->validateResult($geo_punt_be_result);
 
             if($this->options->log_debug){
-                $result->setLogMessage('Google Maps API found '.count($google_result['results']).' result(s) for address '.$address_string);
-                $result->setLogMessage('Google Maps API result: '.json_encode($google_result['results']));
+                $result->setLogMessage('GeoPuntBE API found '.count($geo_punt_be_result['LocationResult']).' result(s) for address '.$address_string);
+                $result->setLogMessage('GeoPuntBE API result: '.json_encode($geo_punt_be_result['LocationResult']));
             }
 
-            foreach($google_result['results'] as $single_google_result){
-                $single_result = $this->analyseResult($single_google_result, $address);
+            foreach($geo_punt_be_result['LocationResult'] as $single_geo_punt_be_result){
+                $single_result = $this->analyseResult($single_geo_punt_be_result, $address);
                 if($single_result->getAccuracy() >= $accuracy){
                     $result->setLatLngResult($single_result);
                 }
@@ -70,7 +63,7 @@ class GoogleGeoProvider implements GeoProvider
             }
 
             if($this->options->log_debug){
-                $result->setLogMessage('Google Maps provider kept '.count($result).' result(s) for address '.$address_string.' with accuracy '.$accuracy);
+                $result->setLogMessage('GeoPuntBE provider kept '.count($result).' result(s) for address '.$address_string.' with accuracy '.$accuracy);
             }
         } catch(\Exception $e){
             if($this->options->log_errors) {
@@ -85,20 +78,12 @@ class GoogleGeoProvider implements GeoProvider
         return $result;
     }
 
-
     /**
      * @param array $data
      * @return bool
      * @throws \Exception
      */
     private function validateResult(/*array*/ $data){
-        if(empty($data['status']) || !in_array($data['status'], self::GOOGLE_STATUS_ACCEPTED)){
-            throw new \Exception('Google maps API returned Status Code: '.$data['status']);
-        }
-
-        if(!empty($data['error_message'])){
-            throw new \Exception('Google maps API returned Error Message: '.$data['error_message']);
-        }
         return TRUE;
     }
 
@@ -108,12 +93,11 @@ class GoogleGeoProvider implements GeoProvider
      * @throws \Exception
      */
     private function analyseResult(/*array*/ $data, Address $address){
-
         $result = new LatLngResult();
         $result->setProviderName(self::PROVIDER_NAME);
-        $result->setProviderId($data['place_id']);
-        $result->setLatitude($data['geometry']['location']['lat']);
-        $result->setLongitude($data['geometry']['location']['lng']);
+        $result->setProviderId($data['ID']);
+        $result->setLatitude($data['Location']['Lat_WGS84']);
+        $result->setLongitude($data['Location']['Lon_WGS84']);
         $result->setAccuracy($this->response_analyser->getValue($data, $address));
         if($this->options->add_description) {
             $result->setDescription($this->response_analyser->getAddressStringFromResult($data));
@@ -131,7 +115,7 @@ class GoogleGeoProvider implements GeoProvider
      * @throws \Exception
      */
     private function request(/*string*/ $address_string) {
-        $url = str_replace(['{{address}}', '{{apikey}}'], [urlencode($address_string), $this->api_key], self::URL);
+        $url = str_replace('{{address}}', urlencode($address_string), self::URL);
         $channel = curl_init();
 
         curl_setopt($channel,CURLOPT_URL, $url);
@@ -143,14 +127,13 @@ class GoogleGeoProvider implements GeoProvider
         $response = curl_exec($channel);
 
         if (curl_error($channel)) {
-            throw new \Exception('Google maps API request failed. Curl returned error ' . curl_error($channel));
+            throw new \Exception('GeoPuntBE API request failed. Curl returned error ' . curl_error($channel));
         }
 
         return json_decode($response, TRUE);
     }
 
     public function useForAddress(Address $address){
-        return TRUE;
+        return ($address->getIsoCountry() == self::ISO_COUNTRY);
     }
-
 }

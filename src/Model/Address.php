@@ -40,6 +40,7 @@ class Address {
                     case 'zipcode':
                     case 'iso_country':
                         $this->$key = $this->normalize($key, trim($value));
+                        break;
                     default:
                         $this->$key = trim($value);
                 }
@@ -127,7 +128,7 @@ class Address {
      * @return string
      * @throws \Exception
      */
-    public function getAddressString(){
+    public function getAddressString($exclude_iso_country = false){
 
         $address_data = $this->toArray();
 
@@ -162,7 +163,7 @@ class Address {
             [
                 empty($address_data['zipcode'])?'':$address_data['zipcode'],
                 empty($address_data['city'])?'':$address_data['city'],
-                empty($address_data['iso_country'])?'':$address_data['iso_country']
+                (empty($address_data['iso_country']) || $exclude_iso_country)?'':$address_data['iso_country']
             ],
         ];
 
@@ -180,9 +181,10 @@ class Address {
      * 1 -> certainly the same address
      * 0 -> certainly not the same address
      * @param Address $address
+     * @param array $ignore_fields
      * @return float
      */
-    public function compare(Address $address){
+    public function compare(Address $address, $ignore_fields = []){
         mb_internal_encoding('UTF-8');
 
         //if country iso code doesn't match, it's a big fail
@@ -212,6 +214,11 @@ class Address {
         array_walk($address_array, function(&$value, $key, $normalize_callback){
             $value = $normalize_callback($key, $value);
         }, [$this, 'normalize']);
+
+        array_walk($ignore_fields, function(&$value, $key) use(&$address_array, &$this_array){
+            unset($address_array[$value]);
+            unset($this_array[$value]);
+        });
 
         $elements_in_both = array_keys(array_intersect_key($this_array, $address_array));
 

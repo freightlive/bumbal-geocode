@@ -146,4 +146,8 @@ class OSMGraphHopperGeoProvider implements GeoProvider {
         $response_obj['code'] = $httpcode;
         return $response_obj;
     }
+
+    public function useForAddress(Address $address){
+        return TRUE;
+    }
 }
