@@ -3,24 +3,24 @@
 namespace BumbalGeocode\Providers\Google;
 
 use BumbalGeocode\GeoProvider;
+use BumbalGeocode\GeoReverseProvider;
 use BumbalGeocode\GeoResponseAnalyser;
 use BumbalGeocode\Model\Address;
+use BumbalGeocode\Model\AddressResultList;
 use BumbalGeocode\Model\LatLngResult;
 use BumbalGeocode\Model\LatLngResultList;
 use BumbalGeocode\Model\GeoProviderOptions;
 
-class GoogleGeoProvider implements GeoProvider
-{
-    const URL = 'https://maps.googleapis.com/maps/api/geocode/json?address={{address}}&key={{apikey}}';
+class GoogleGeoProvider implements GeoProvider, GeoReverseProvider {
 
-    const GOOGLE_STATUS_ACCEPTED = [
-        'ZERO_RESULTS',
-        'OK'
-    ];
+    const URL = 'https://maps.googleapis.com/maps/api/geocode/json?address={{address}}&key={{apikey}}';
+    const REVERSE_URL = 'https://maps.googleapis.com/maps/api/geocode/json?latlng={{latlng}}&location_type=ROOFTOP&result_type=street_address&key={{apikey}}';
+
+
 
     const PROVIDER_NAME = 'google_maps';
 
-    private $api_key;
+
     private $options;
     private $response_analyser;
 
@@ -34,6 +34,53 @@ class GoogleGeoProvider implements GeoProvider
         $this->api_key = $api_key;
         $this->options = ($options ? $options : new GeoProviderOptions());
         $this->response_analyser = ($response_analyser ? $response_analyser : new GoogleGeoResponseAnalyser());
+    }
+
+    /**
+     * @param $latitude
+     * @param $longitude
+     * @return AddressResultList
+     */
+    public function getAddressResultListFromLatLng(/*float*/ $latitude, /*float*/ $longitude) {
+        $result = new AddressResultList();
+
+        try {
+            $latlng_string = $latitude.','.$longitude;
+
+            if($this->options->log_debug){
+                $result->setLogMessage('Google Maps API provider Reverse Geocoding invoked for latitude,longitude '.$latlng_string);
+            }
+
+            $url = str_replace(['{{latlng}}', '{{apikey}}'], [urlencode($latlng_string), $this->api_key], self::REVERSE_URL);
+            $google_result = $this->request($url);
+
+            $this->validateResult($google_result);
+
+            var_dump($google_result);
+            die();
+            if($this->options->log_debug){
+                $result->setLogMessage('Google Maps API found '.count($google_result['results']).' result(s) for latitude,longitude '.$latlng_string);
+                $result->setLogMessage('Google Maps API result: '.json_encode($google_result['results']));
+            }
+
+            foreach($google_result['results'] as $single_google_result){
+                $result->setAddress($single_result);
+            }
+
+            if($this->options->log_debug){
+                $result->setLogMessage('Google Maps provider kept '.count($result).' result(s) for address '.$address_string.' with accuracy '.$accuracy);
+            }
+        } catch(\Exception $e){
+            if($this->options->log_errors) {
+                $result->setError($e->getMessage() .(!empty($address_string) ? " ($address_string)" : ''));
+            }
+
+            if($this->options->log_debug){
+                $result->setLogMessage('Error: '.$e->getMessage() .(!empty($address_string) ? " ($address_string)" : ''));
+            }
+        }
+
+        return $result;
     }
 
     /**
@@ -52,7 +99,8 @@ class GoogleGeoProvider implements GeoProvider
                 $result->setLogMessage('Google Maps API provider Geocoding invoked for address '.$address_string.' with accuracy '.$accuracy);
             }
 
-            $google_result = $this->request($address_string);
+            $url = str_replace(['{{address}}', '{{apikey}}'], [urlencode($address_string), $this->api_key], self::URL);
+            $google_result = $this->request($url);
 
             $this->validateResult($google_result);
 
@@ -86,24 +134,11 @@ class GoogleGeoProvider implements GeoProvider
     }
 
 
-    /**
-     * @param array $data
-     * @return bool
-     * @throws \Exception
-     */
-    private function validateResult(/*array*/ $data){
-        if(empty($data['status']) || !in_array($data['status'], self::GOOGLE_STATUS_ACCEPTED)){
-            throw new \Exception('Google maps API returned Status Code: '.$data['status']);
-        }
 
-        if(!empty($data['error_message'])){
-            throw new \Exception('Google maps API returned Error Message: '.$data['error_message']);
-        }
-        return TRUE;
-    }
 
     /**
      * @param array $data
+     * @param Address $address
      * @return LatLngResult
      * @throws \Exception
      */
@@ -125,32 +160,10 @@ class GoogleGeoProvider implements GeoProvider
         return $result;
     }
 
-    /**
-     * @param string $address_string
-     * @return array mixed
-     * @throws \Exception
-     */
-    private function request(/*string*/ $address_string) {
-        $url = str_replace(['{{address}}', '{{apikey}}'], [urlencode($address_string), $this->api_key], self::URL);
-        $channel = curl_init();
 
-        curl_setopt($channel,CURLOPT_URL, $url);
-        curl_setopt($channel,CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($channel,CURLOPT_HEADER, false);
-        curl_setopt($channel,CURLOPT_POST, false);
-        curl_setopt($channel,CURLOPT_SSL_VERIFYPEER, true);
-        curl_setopt($channel,CURLOPT_SSL_VERIFYHOST, 2);
-        $response = curl_exec($channel);
-
-        if (curl_error($channel)) {
-            throw new \Exception('Google maps API request failed. Curl returned error ' . curl_error($channel));
-        }
-
-        return json_decode($response, TRUE);
-    }
 
     public function useForAddress(Address $address){
-        return TRUE;
+        return true;
     }
 
 }
