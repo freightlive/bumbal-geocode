@@ -106,8 +106,9 @@ class GeoResponseAnalyser {
     private function normalizeWeights(){
         //make array_sum equal to count($array)
         $count = count($this->weights);
-        if($count != 0) {
-            $multiplier = $count / array_sum($this->weights);
+        $sum_weights = array_sum($this->weights);
+        if($count != 0 && $sum_weights != 0) {
+            $multiplier = $count / $sum_weights;
             array_walk($this->weights, function (&$value, $key, $multiplier) {
                 $value = $value * $multiplier;
             }, $multiplier);
