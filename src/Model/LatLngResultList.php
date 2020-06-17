@@ -118,6 +118,13 @@ class LatLngResultList implements Iterator, Countable, ArrayAccess {
     }
 
     /**
+     * @return bool
+     */
+    public function hasResults() {
+        return count($this->lat_lng_results) != 0;
+    }
+
+    /**
      * Order results based on accuracy
      */
     private function orderLatLngResults(){

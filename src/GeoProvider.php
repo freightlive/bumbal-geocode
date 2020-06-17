@@ -13,11 +13,4 @@ interface GeoProvider {
      * @return LatLngResultList
      */
     public function getLatLngResultListFromAddress(Address $address, /*float*/ $accuracy);
-
-    /**
-     * return if this concrete provider should be used for geocoding the given address
-     * @param Address $address
-     * @return boolean
-     */
-    public function useForAddress(Address $address);
 }

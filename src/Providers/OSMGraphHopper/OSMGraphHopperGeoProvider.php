@@ -13,7 +13,6 @@ use BumbalGeocode\Model\GeoProviderOptions;
 class OSMGraphHopperGeoProvider implements GeoProvider {
     const URL = 'https://graphhopper.com/api/1/geocode?q={{address}}&locale=en&debug=true&key={{apikey}}';
 
-    const NOT_ISO_COUNTRY = ['DE'];
     const PROVIDER_NAME = 'graphhopper_osm';
 
     private $api_key;
@@ -146,9 +145,5 @@ class OSMGraphHopperGeoProvider implements GeoProvider {
         $response_obj = json_decode($response, TRUE);
         $response_obj['code'] = $httpcode;
         return $response_obj;
-    }
-
-    public function useForAddress(Address $address){
-        return !in_array($address->getIsoCountry(),self::NOT_ISO_COUNTRY);
     }
 }

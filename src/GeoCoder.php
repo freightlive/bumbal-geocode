@@ -3,23 +3,23 @@
 namespace BumbalGeocode;
 
 use BumbalGeocode\Model\LatLngResultList;
-use BumbalGeocode\Model\LatLngResult;
 use BumbalGeocode\Model\Address;
 use BumbalGeocode\Model\GeoCoderOptions;
+use BumbalGeocode\GeoProviderStrategyList;
 
 class GeoCoder {
 
-    protected $providers;
+    protected $strategies;
 
     protected $options;
 
     /**
      * GeoCoder constructor.
-     * @param GeoProviderList $providers
+     * @param GeoProviderStrategyList $strategies
      * @param GeoCoderOptions $options
      */
-    public function __construct(GeoProviderList $providers, GeoCoderOptions $options = NULL){
-        $this->providers = $providers;
+    public function __construct(GeoProviderStrategyList $strategies, GeoCoderOptions $options = NULL){
+        $this->strategies = $strategies;
         $this->options = ($options ? $options : new GeoCoderOptions());
     }
 
@@ -30,16 +30,11 @@ class GeoCoder {
      */
     public function getLatLngResultListFromAddress(Address $address, /*float*/ $accuracy){
         $result = new LatLngResultList();
-        foreach($this->providers as $provider){
-            if($provider->useForAddress($address)) {
-                $provider_result = $provider->getLatLngResultListFromAddress($address, $accuracy, $this->options);
-                $result->merge($provider_result);
-                if ($this->options->quit_on_error && $provider_result->hasErrors()) {
-                    return $result;
-                }
-
-                if ($this->options->quit_after_first_result && count($provider_result) > 0) {
-                    return $result;
+        foreach($this->strategies as $strategy){
+            if($strategy->useForAddress($address)) {
+                $result = $strategy->getLatLngResultListForAddress($address, $accuracy);
+                if($result->hasResults()) {
+                    break;
                 }
             }
         }

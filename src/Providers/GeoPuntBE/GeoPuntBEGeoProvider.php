@@ -15,7 +15,6 @@ class GeoPuntBEGeoProvider implements GeoProvider {
 
     const URL = 'https://loc.geopunt.be/geolocation/location?q={{address}}';
     const PROVIDER_NAME = 'geopunt_be';
-    const ISO_COUNTRY = 'BE';
 
     private $options;
     private $response_analyser;
@@ -131,9 +130,5 @@ class GeoPuntBEGeoProvider implements GeoProvider {
         }
 
         return json_decode($response, TRUE);
-    }
-
-    public function useForAddress(Address $address){
-        return ($address->getIsoCountry() == self::ISO_COUNTRY);
     }
 }
