@@ -8,6 +8,7 @@ use BumbalGeocode\Model\Address;
 use BumbalGeocode\Model\LatLngResult;
 use BumbalGeocode\Model\LatLngResultList;
 use BumbalGeocode\Model\GeoProviderOptions;
+use BumbalGeocode\Model\ProviderResponseCache;
 
 class GoogleGeoProvider implements GeoProvider
 {
@@ -23,17 +24,20 @@ class GoogleGeoProvider implements GeoProvider
     private $api_key;
     private $options;
     private $response_analyser;
+    private $cache;
 
     /**
      * GoogleGeoProvider constructor.
-     * @param string $api_key
+     * @param $api_key
      * @param GeoProviderOptions|NULL $options
      * @param GeoResponseAnalyser|NULL $response_analyser
+     * @param ProviderResponseCache|NULL $cache
      */
-    public function __construct(/*string*/ $api_key, GeoProviderOptions $options = NULL, GeoResponseAnalyser $response_analyser = NULL) {
+    public function __construct(/*string*/ $api_key, GeoProviderOptions $options = NULL, GeoResponseAnalyser $response_analyser = NULL, ProviderResponseCache $cache = NULL) {
         $this->api_key = $api_key;
         $this->options = ($options ? $options : new GeoProviderOptions());
         $this->response_analyser = ($response_analyser ? $response_analyser : new GoogleGeoResponseAnalyser());
+        $this->cache = $cache;
     }
 
     /**
@@ -132,6 +136,11 @@ class GoogleGeoProvider implements GeoProvider
      */
     private function request(/*string*/ $address_string) {
         $url = str_replace(['{{address}}', '{{apikey}}'], [urlencode($address_string), $this->api_key], self::URL);
+
+        if($this->cache && $this->cache->hasProviderResponse($url)) {
+            return $this->cache->getProviderResponse();
+        }
+
         $channel = curl_init();
 
         curl_setopt($channel,CURLOPT_URL, $url);
@@ -146,6 +155,10 @@ class GoogleGeoProvider implements GeoProvider
             throw new \Exception('Google maps API request failed. Curl returned error ' . curl_error($channel));
         }
 
-        return json_decode($response, TRUE);
+        $response_array = json_decode($response, TRUE);
+        if($this->cache) {
+            $this->cache->setProviderResponse($url, $response_array);
+        }
+        return $response_array;
     }
 }

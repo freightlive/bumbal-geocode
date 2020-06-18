@@ -8,6 +8,7 @@ use BumbalGeocode\Model\Address;
 use BumbalGeocode\Model\LatLngResult;
 use BumbalGeocode\Model\LatLngResultList;
 use BumbalGeocode\Model\GeoProviderOptions;
+use BumbalGeocode\Model\ProviderResponseCache;
 
 
 class OSMGraphHopperGeoProvider implements GeoProvider {
@@ -19,16 +20,20 @@ class OSMGraphHopperGeoProvider implements GeoProvider {
     private $options;
     private $response_analyser;
 
+    private $cache;
+
     /**
      * OSMGraphHopperGeoProvider constructor.
-     * @param string $api_key
+     * @param $api_key
      * @param GeoProviderOptions|NULL $options
-     * @param GeoResponseAnalyser $response_analyser
+     * @param GeoResponseAnalyser|NULL $response_analyser
+     * @param ProviderResponseCache|NULL $cache
      */
-    public function __construct(/*string*/ $api_key, GeoProviderOptions $options = NULL, GeoResponseAnalyser $response_analyser = NULL) {
+    public function __construct(/*string*/ $api_key, GeoProviderOptions $options = NULL, GeoResponseAnalyser $response_analyser = NULL, ProviderResponseCache $cache = NULL) {
         $this->api_key = $api_key;
         $this->options = ($options ? $options : new GeoProviderOptions());
         $this->response_analyser = ($response_analyser ? $response_analyser : new OSMGraphHopperGeoResponseAnalyser());
+        $this->cache = $cache;
     }
 
     /**
@@ -125,7 +130,9 @@ class OSMGraphHopperGeoProvider implements GeoProvider {
      */
     private function request(/*string*/ $address_string) {
         $url = str_replace(['{{address}}', '{{apikey}}'], [urlencode($address_string), $this->api_key], self::URL);
-
+        if($this->cache && $this->cache->hasProviderResponse($url)) {
+            return $this->cache->getProviderResponse();
+        }
         $channel = curl_init();
 
         curl_setopt($channel, CURLOPT_URL, $url);
@@ -144,6 +151,11 @@ class OSMGraphHopperGeoProvider implements GeoProvider {
 
         $response_obj = json_decode($response, TRUE);
         $response_obj['code'] = $httpcode;
+
+        if($this->cache) {
+            $this->cache->setProviderResponse($url, $response_obj);
+        }
+
         return $response_obj;
     }
 }

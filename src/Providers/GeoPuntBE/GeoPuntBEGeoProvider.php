@@ -6,6 +6,7 @@ namespace BumbalGeocode\Providers\GeoPuntBE;
 use BumbalGeocode\GeoProvider;
 use BumbalGeocode\GeoResponseAnalyser;
 use BumbalGeocode\Model\GeoProviderOptions;
+use BumbalGeocode\Model\ProviderResponseCache;
 use BumbalGeocode\Model\Address;
 use BumbalGeocode\Model\LatLngResult;
 use BumbalGeocode\Model\LatLngResultList;
@@ -18,15 +19,18 @@ class GeoPuntBEGeoProvider implements GeoProvider {
 
     private $options;
     private $response_analyser;
+    private $cache;
 
     /**
      * GeoPuntBEGeoProvider constructor.
      * @param GeoProviderOptions|NULL $options
      * @param GeoResponseAnalyser|NULL $response_analyser
+     * @param ProviderResponseCache|NULL $cache
      */
-    public function __construct(GeoProviderOptions $options = NULL, GeoResponseAnalyser $response_analyser = NULL) {
+    public function __construct(GeoProviderOptions $options = NULL, GeoResponseAnalyser $response_analyser = NULL, ProviderResponseCache $cache = NULL) {
         $this->options = ($options ? $options : new GeoProviderOptions());
         $this->response_analyser = ($response_analyser ? $response_analyser : new GeoPuntBEGeoResponseAnalyser());
+        $this->cache = $cache;
     }
 
     /**
@@ -58,7 +62,6 @@ class GeoPuntBEGeoProvider implements GeoProvider {
                 if($single_result->getAccuracy() >= $accuracy){
                     $result->setLatLngResult($single_result);
                 }
-
             }
 
             if($this->options->log_debug){
@@ -115,6 +118,11 @@ class GeoPuntBEGeoProvider implements GeoProvider {
      */
     private function request(/*string*/ $address_string) {
         $url = str_replace('{{address}}', urlencode($address_string), self::URL);
+
+        if($this->cache && $this->cache->hasProviderResponse($url)) {
+            return $this->cache->getProviderResponse();
+        }
+
         $channel = curl_init();
 
         curl_setopt($channel,CURLOPT_URL, $url);
@@ -129,6 +137,10 @@ class GeoPuntBEGeoProvider implements GeoProvider {
             throw new \Exception('GeoPuntBE API request failed. Curl returned error ' . curl_error($channel));
         }
 
-        return json_decode($response, TRUE);
+        $response_array = json_decode($response, TRUE);
+        if($this->cache) {
+            $this->cache->setProviderResponse($url, $response_array);
+        }
+        return $response_array;
     }
 }

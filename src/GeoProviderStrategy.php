@@ -7,14 +7,16 @@ use BumbalGeocode\Model\Address;
 use BumbalGeocode\Model\LatLngResultList;
 use BumbalGeocode\Model\GeoProviderStrategyOptions;
 
-abstract class GeoProviderStrategy {
+class GeoProviderStrategy {
 
     protected $providers;
     protected $options;
+    protected $condition;
 
-    public function __construct(GeoProviderList $providers, GeoProviderStrategyOptions $options) {
+    public function __construct(GeoProviderList $providers, callable $condition, GeoProviderStrategyOptions $options) {
         $this->providers = $providers;
         $this->options = $options;
+        $this->condition = $condition;
     }
 
     /**
@@ -45,5 +47,10 @@ abstract class GeoProviderStrategy {
      * @param Address $address
      * @return boolean
      */
-    abstract public function useForAddress(Address $address);
+    public function useForAddress(Address $address) {
+        if($this->condition) {
+            return call_user_func($this->condition, $address);
+        }
+        return true;
+    }
 }

@@ -5,12 +5,11 @@ namespace BumbalGeocode;
 use BumbalGeocode\Model\LatLngResultList;
 use BumbalGeocode\Model\Address;
 use BumbalGeocode\Model\GeoCoderOptions;
-use BumbalGeocode\GeoProviderStrategyList;
+
 
 class GeoCoder {
 
     protected $strategies;
-
     protected $options;
 
     /**
@@ -28,17 +27,12 @@ class GeoCoder {
      * @param float $accuracy
      * @return LatLngResultList
      */
-    public function getLatLngResultListFromAddress(Address $address, /*float*/ $accuracy){
-        $result = new LatLngResultList();
-        foreach($this->strategies as $strategy){
-            if($strategy->useForAddress($address)) {
-                $result = $strategy->getLatLngResultListForAddress($address, $accuracy);
-                if($result->hasResults()) {
-                    break;
-                }
-            }
-        }
+    public function getLatLngResultListForAddress(Address $address, /*float*/ $accuracy){
+        $result = $this->strategies->getLatLngResultListForAddress($address, $accuracy);
 
+        if($this->options->diagnose) {
+
+        }
         return $result;
     }
 }

@@ -8,12 +8,7 @@ class GeoCoderOptions {
     /**
      * @var bool
      */
-    public $quit_on_error = FALSE;
-
-    /**
-     * @var bool
-     */
-    public $quit_after_first_result = TRUE;
+    public $diagnose = FALSE;
 
     public function __construct(/*array*/ $options = []) {
         foreach($options as $key => $value){

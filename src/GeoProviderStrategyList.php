@@ -3,6 +3,8 @@
 
 namespace BumbalGeocode;
 
+use BumbalGeocode\Model\Address;
+use BumbalGeocode\Model\LatLngResultList;
 use BumbalGeocode\Util\PriorityList;
 
 class GeoProviderStrategyList extends PriorityList {
@@ -15,19 +17,22 @@ class GeoProviderStrategyList extends PriorityList {
         $this->setItem($strategy, $priority);
     }
 
-    /**
-     * @param int $index
-     * @return GeoProviderStrategy|null
-     */
-    public function getProviderStrategy(/*int*/ $index){
-        return $this->getItem($index);
+    public function getLatLngResultListForAddress(Address $address, /*float*/ $accuracy, /*bool*/ $diagnose = false){
+        $result = new LatLngResultList();
+        foreach($this->getItems() as $strategy){
+            if($strategy->useForAddress($address)) {
+                $result = $strategy->getLatLngResultListForAddress($address, $accuracy);
+
+                if($diagnose) {
+
+                }
+
+                if($result->hasResults()) {
+                    break;
+                }
+            }
+        }
+        return $result;
     }
 
-    /**
-     * @param int|NULL $priority
-     * @return array|mixed
-     */
-    public function getGeoProviderStrategies(/*int*/ $priority = NULL){
-        return $this->getItems();
-    }
 }
