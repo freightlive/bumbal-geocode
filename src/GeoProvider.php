@@ -9,8 +9,8 @@ interface GeoProvider {
 
     /**
      * @param Address $address
-     * @param float $accuracy
+     * @param float $min_accuracy
      * @return LatLngResultList
      */
-    public function getLatLngResultListFromAddress(Address $address, /*float*/ $accuracy);
+    public function getLatLngResultListForAddress(Address $address, /*float*/ $min_accuracy);
 }

@@ -4,7 +4,7 @@
 namespace BumbalGeocode\Model;
 
 
-class ProviderDiagnosis {
+class ProviderReport {
 
     public $provider_name;
 

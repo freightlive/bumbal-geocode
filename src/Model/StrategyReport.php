@@ -4,7 +4,7 @@
 namespace BumbalGeocode\Model;
 
 
-class StrategyDiagnosis {
+class StrategyReport {
     public $provider_diagnoses;
     public $address;
     public $normalized_address;

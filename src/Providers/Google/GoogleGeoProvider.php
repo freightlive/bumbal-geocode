@@ -42,10 +42,10 @@ class GoogleGeoProvider implements GeoProvider
 
     /**
      * @param Address $address
-     * @param float $accuracy
+     * @param float $min_accuracy
      * @return LatLngResultList
      */
-    public function getLatLngResultListFromAddress(Address $address, /*float*/ $accuracy){
+    public function getLatLngResultListForAddress(Address $address, /*float*/ $min_accuracy){
         $result = new LatLngResultList();
         $address_string = '';
 
@@ -53,10 +53,10 @@ class GoogleGeoProvider implements GeoProvider
             $address_string = $address->getAddressString();
 
             if($this->options->log_debug){
-                $result->setLogMessage('Google Maps API provider Geocoding invoked for address '.$address_string.' with accuracy '.$accuracy);
+                $result->setLogMessage('Google Maps API provider Geocoding invoked for address '.$address_string.' with accuracy '.$min_accuracy);
             }
 
-            $google_result = $this->request($address_string);
+            $google_result = $this->request($address_string, $result);
 
             $this->validateResult($google_result);
 
@@ -67,14 +67,14 @@ class GoogleGeoProvider implements GeoProvider
 
             foreach($google_result['results'] as $single_google_result){
                 $single_result = $this->analyseResult($single_google_result, $address);
-                if($single_result->getAccuracy() >= $accuracy){
+                if($single_result->getAccuracy() >= $min_accuracy){
                     $result->setLatLngResult($single_result);
                 }
 
             }
 
             if($this->options->log_debug){
-                $result->setLogMessage('Google Maps provider kept '.count($result).' result(s) for address '.$address_string.' with accuracy '.$accuracy);
+                $result->setLogMessage('Google Maps provider kept '.count($result).' result(s) for address '.$address_string.' with accuracy '.$min_accuracy);
             }
         } catch(\Exception $e){
             if($this->options->log_errors) {
@@ -108,8 +108,8 @@ class GoogleGeoProvider implements GeoProvider
 
     /**
      * @param array $data
+     * @param Address $address
      * @return LatLngResult
-     * @throws \Exception
      */
     private function analyseResult(/*array*/ $data, Address $address){
 
@@ -131,14 +131,22 @@ class GoogleGeoProvider implements GeoProvider
 
     /**
      * @param string $address_string
-     * @return array mixed
+     * @param LatLngResultList $result
+     * @return array|mixed
      * @throws \Exception
      */
-    private function request(/*string*/ $address_string) {
+    private function request(/*string*/ $address_string, LatLngResultList $result) {
         $url = str_replace(['{{address}}', '{{apikey}}'], [urlencode($address_string), $this->api_key], self::URL);
 
+        if($this->options->log_debug) {
+            $result->setLogMessage('Google Maps url requested: '.$url);
+        }
+
         if($this->cache && $this->cache->hasProviderResponse($url)) {
-            return $this->cache->getProviderResponse();
+            if($this->options->log_debug) {
+                $result->setLogMessage('Google Maps response found in cache: ' . $url);
+            }
+            return $this->cache->getProviderResponse($url);
         }
 
         $channel = curl_init();

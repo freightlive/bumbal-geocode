@@ -35,10 +35,10 @@ class GeoPuntBEGeoProvider implements GeoProvider {
 
     /**
      * @param Address $address
-     * @param float $accuracy
+     * @param float $min_accuracy
      * @return LatLngResultList
      */
-    public function getLatLngResultListFromAddress(Address $address, /*float*/ $accuracy){
+    public function getLatLngResultListForAddress(Address $address, /*float*/ $min_accuracy){
         $result = new LatLngResultList();
         $address_string = '';
 
@@ -46,10 +46,10 @@ class GeoPuntBEGeoProvider implements GeoProvider {
             $address_string = $address->getAddressString(true);
 
             if($this->options->log_debug){
-                $result->setLogMessage('GeoPuntBE API provider Geocoding invoked for address '.$address_string.' with accuracy '.$accuracy);
+                $result->setLogMessage('GeoPuntBE API provider Geocoding invoked for address '.$address_string.' with accuracy '.$min_accuracy);
             }
 
-            $geo_punt_be_result = $this->request($address_string);
+            $geo_punt_be_result = $this->request($address_string, $result);
             $this->validateResult($geo_punt_be_result);
 
             if($this->options->log_debug){
@@ -59,13 +59,13 @@ class GeoPuntBEGeoProvider implements GeoProvider {
 
             foreach($geo_punt_be_result['LocationResult'] as $single_geo_punt_be_result){
                 $single_result = $this->analyseResult($single_geo_punt_be_result, $address);
-                if($single_result->getAccuracy() >= $accuracy){
+                if($single_result->getAccuracy() >= $min_accuracy){
                     $result->setLatLngResult($single_result);
                 }
             }
 
             if($this->options->log_debug){
-                $result->setLogMessage('GeoPuntBE provider kept '.count($result).' result(s) for address '.$address_string.' with accuracy '.$accuracy);
+                $result->setLogMessage('GeoPuntBE provider kept '.count($result).' result(s) for address '.$address_string.' with accuracy '.$min_accuracy);
             }
         } catch(\Exception $e){
             if($this->options->log_errors) {
@@ -113,14 +113,22 @@ class GeoPuntBEGeoProvider implements GeoProvider {
 
     /**
      * @param string $address_string
+     * @param LatLngResultList $result
      * @return array mixed
      * @throws \Exception
      */
-    private function request(/*string*/ $address_string) {
+    private function request(/*string*/ $address_string, LatLngResultList $result) {
         $url = str_replace('{{address}}', urlencode($address_string), self::URL);
 
+        if($this->options->log_debug) {
+            $result->setLogMessage('Google Maps url requested: '.$url);
+        }
+
         if($this->cache && $this->cache->hasProviderResponse($url)) {
-            return $this->cache->getProviderResponse();
+            if($this->options->log_debug) {
+                $result->setLogMessage('Google Maps response found in cache: ' . $url);
+            }
+            return $this->cache->getProviderResponse($url);
         }
 
         $channel = curl_init();

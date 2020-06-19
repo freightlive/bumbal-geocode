@@ -10,16 +10,13 @@ use BumbalGeocode\Model\GeoCoderOptions;
 class GeoCoder {
 
     protected $strategies;
-    protected $options;
 
     /**
      * GeoCoder constructor.
      * @param GeoProviderStrategyList $strategies
-     * @param GeoCoderOptions $options
      */
-    public function __construct(GeoProviderStrategyList $strategies, GeoCoderOptions $options = NULL){
+    public function __construct(GeoProviderStrategyList $strategies){
         $this->strategies = $strategies;
-        $this->options = ($options ? $options : new GeoCoderOptions());
     }
 
     /**
@@ -30,9 +27,6 @@ class GeoCoder {
     public function getLatLngResultListForAddress(Address $address, /*float*/ $accuracy){
         $result = $this->strategies->getLatLngResultListForAddress($address, $accuracy);
 
-        if($this->options->diagnose) {
-
-        }
         return $result;
     }
 }

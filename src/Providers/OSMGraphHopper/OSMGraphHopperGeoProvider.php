@@ -41,7 +41,7 @@ class OSMGraphHopperGeoProvider implements GeoProvider {
      * @param float $accuracy
      * @return LatLngResultList
      */
-    public function getLatLngResultListFromAddress(Address $address, /*float*/ $accuracy){
+    public function getLatLngResultListForAddress(Address $address, /*float*/ $min_accuracy){
         $result = new LatLngResultList();
         $address_string = '';
 
@@ -49,10 +49,10 @@ class OSMGraphHopperGeoProvider implements GeoProvider {
             $address_string = $address->getAddressString();
 
             if($this->options->log_debug){
-                $result->setLogMessage('GraphHopper OSM provider Geocoding invoked for address '.$address_string.' with accuracy '.$accuracy);
+                $result->setLogMessage('GraphHopper OSM provider Geocoding invoked for address '.$address_string.' with accuracy '.$min_accuracy);
             }
 
-            $graphhopper_result = $this->request($address_string);
+            $graphhopper_result = $this->request($address_string, $result);
             $this->validateResult($graphhopper_result);
 
             if($this->options->log_debug){
@@ -62,13 +62,13 @@ class OSMGraphHopperGeoProvider implements GeoProvider {
 
             foreach($graphhopper_result['hits'] as $single_graphhopper_result) {
                 $single_result = $this->analyseResult($single_graphhopper_result, $address);
-                if($single_result->getAccuracy() >= $accuracy){
+                if($single_result->getAccuracy() >= $min_accuracy){
                     $result->setLatLngResult($single_result);
                 }
             }
 
             if($this->options->log_debug){
-                $result->setLogMessage('GraphHopper OSM provider kept '.count($result).' result(s) for address '.$address_string.' with accuracy '.$accuracy);
+                $result->setLogMessage('GraphHopper OSM provider kept '.count($result).' result(s) for address '.$address_string.' with accuracy '.$min_accuracy);
             }
 
         } catch(\Exception $e){
@@ -125,13 +125,23 @@ class OSMGraphHopperGeoProvider implements GeoProvider {
 
     /**
      * @param string $address_string
+     * @param LatLngResultList $result
      * @return array mixed
      * @throws \Exception
      */
-    private function request(/*string*/ $address_string) {
+    private function request(/*string*/ $address_string, LatLngResultList $result) {
         $url = str_replace(['{{address}}', '{{apikey}}'], [urlencode($address_string), $this->api_key], self::URL);
+
+        if($this->options->log_debug) {
+            $result->setLogMessage('Google Maps url requested: '.$url);
+        }
+
         if($this->cache && $this->cache->hasProviderResponse($url)) {
-            return $this->cache->getProviderResponse();
+            if($this->options->log_debug) {
+                $result->setLogMessage('Google Maps response found in cache: ' . $url);
+            }
+
+            return $this->cache->getProviderResponse($url);
         }
         $channel = curl_init();
 

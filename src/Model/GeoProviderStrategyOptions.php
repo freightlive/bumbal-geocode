@@ -15,11 +15,6 @@ class GeoProviderStrategyOptions {
      */
     public $quit_after_first_result = TRUE;
 
-    /**
-     * @var float
-     */
-    public $accuracy_threshold = 0.0;
-
     public function __construct(/*array*/ $options = []) {
         foreach($options as $key => $value){
             if(property_exists($this, $key)){

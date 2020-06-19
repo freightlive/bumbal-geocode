@@ -20,7 +20,7 @@ class ProviderResponseCache {
      * @return array
      */
     public function getProviderResponse(/*string*/ $url) {
-        if($this->hasProviderResponse()) {
+        if($this->hasProviderResponse($url)) {
             return $this->url_to_response[$url];
         }
         return [];

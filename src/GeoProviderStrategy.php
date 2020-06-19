@@ -12,11 +12,27 @@ class GeoProviderStrategy {
     protected $providers;
     protected $options;
     protected $condition;
+    protected $id;
 
-    public function __construct(GeoProviderList $providers, callable $condition, GeoProviderStrategyOptions $options) {
+    /**
+     * GeoProviderStrategy constructor.
+     * @param string $id
+     * @param GeoProviderList $providers
+     * @param GeoProviderStrategyOptions $options
+     * @param callable|null $condition
+     */
+    public function __construct(/*string*/ $id, GeoProviderList $providers, GeoProviderStrategyOptions $options, callable $condition = null) {
         $this->providers = $providers;
         $this->options = $options;
         $this->condition = $condition;
+        $this->id = $id;
+    }
+
+    /**
+     * @return string
+     */
+    public function getId() {
+        return $this->id;
     }
 
     /**
@@ -26,9 +42,26 @@ class GeoProviderStrategy {
      */
     public function getLatLngResultListForAddress(Address $address, /*float*/ $accuracy){
         $result = new LatLngResultList();
+
+        $address_as_string = '';
+        try {
+            $address_as_string = $address->getAddressString();
+        } catch(\Exception $e) {
+            $result->setLogMessage('Strategy \''.$this->id. '\' failed: '.$e->getMessage());
+            return $result;
+        }
+
+        if(!$this->useForAddress($address)) {
+            $result->setLogMessage('Strategy \''.$this->id. '\' rejected address '.$address_as_string.' based on condition');
+            return $result;
+        }
+        $result->setLogMessage('Strategy \''.$this->id. '\' accepted address '.$address_as_string);
+
         foreach($this->providers as $provider){
-            //@todo options, accuracy
-            $provider_result = $provider->getLatLngResultListFromAddress($address, $accuracy, $this->options);
+            /**
+             * @var LatLngResultList $provider_result
+             */
+            $provider_result = $provider->getLatLngResultListForAddress($address, $accuracy);
             $result->merge($provider_result);
             if ($this->options->quit_on_error && $provider_result->hasErrors()) {
                 return $result;

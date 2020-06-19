@@ -17,20 +17,17 @@ class GeoProviderStrategyList extends PriorityList {
         $this->setItem($strategy, $priority);
     }
 
-    public function getLatLngResultListForAddress(Address $address, /*float*/ $accuracy, /*bool*/ $diagnose = false){
+    public function getLatLngResultListForAddress(Address $address, /*float*/ $accuracy){
         $result = new LatLngResultList();
         foreach($this->getItems() as $strategy){
-            if($strategy->useForAddress($address)) {
-                $result = $strategy->getLatLngResultListForAddress($address, $accuracy);
+            /** @var LatLngResultList $strategy_result **/
+            $strategy_result = $strategy->getLatLngResultListForAddress($address, $accuracy);
+            $result->merge($strategy_result);
 
-                if($diagnose) {
-
-                }
-
-                if($result->hasResults()) {
-                    break;
-                }
+            if($result->hasResults()) {
+                break;
             }
+
         }
         return $result;
     }
