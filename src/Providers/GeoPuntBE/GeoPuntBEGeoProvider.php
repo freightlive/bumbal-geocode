@@ -10,6 +10,7 @@ use BumbalGeocode\Model\ProviderResponseCache;
 use BumbalGeocode\Model\Address;
 use BumbalGeocode\Model\LatLngResult;
 use BumbalGeocode\Model\LatLngResultList;
+use BumbalGeocode\Model\Report;
 
 
 class GeoPuntBEGeoProvider implements GeoProvider {
@@ -20,6 +21,7 @@ class GeoPuntBEGeoProvider implements GeoProvider {
     private $options;
     private $response_analyser;
     private $cache;
+    private $report;
 
     /**
      * GeoPuntBEGeoProvider constructor.
@@ -31,6 +33,7 @@ class GeoPuntBEGeoProvider implements GeoProvider {
         $this->options = ($options ? $options : new GeoProviderOptions());
         $this->response_analyser = ($response_analyser ? $response_analyser : new GeoPuntBEGeoResponseAnalyser());
         $this->cache = $cache;
+        $this->report = null;
     }
 
     /**
@@ -40,6 +43,13 @@ class GeoPuntBEGeoProvider implements GeoProvider {
      */
     public function getLatLngResultListForAddress(Address $address, /*float*/ $min_accuracy){
         $result = new LatLngResultList();
+
+        if($this->options->add_report) {
+            $this->report = new Report();
+            $this->report->address = $address;
+            $this->report->provider_name = self::PROVIDER_NAME;
+        }
+
         $address_string = '';
 
         try {
@@ -49,7 +59,15 @@ class GeoPuntBEGeoProvider implements GeoProvider {
                 $result->setLogMessage('GeoPuntBE API provider Geocoding invoked for address '.$address_string.' with accuracy '.$min_accuracy);
             }
 
+            if($this->options->add_report) {
+                $this->report->url = str_replace('{{address}}', urlencode($address_string), self::URL);
+            }
+
             $geo_punt_be_result = $this->request($address_string, $result);
+
+            if($this->options->add_report) {
+                $this->report->response = $geo_punt_be_result;
+            }
             $this->validateResult($geo_punt_be_result);
 
             if($this->options->log_debug){
@@ -59,6 +77,11 @@ class GeoPuntBEGeoProvider implements GeoProvider {
 
             foreach($geo_punt_be_result['LocationResult'] as $single_geo_punt_be_result){
                 $single_result = $this->analyseResult($single_geo_punt_be_result, $address);
+
+                if($this->options->add_report) {
+                    $this->report->addLatLngResult($single_result);
+                }
+
                 if($single_result->getAccuracy() >= $min_accuracy){
                     $result->setLatLngResult($single_result);
                 }
@@ -67,6 +90,8 @@ class GeoPuntBEGeoProvider implements GeoProvider {
             if($this->options->log_debug){
                 $result->setLogMessage('GeoPuntBE provider kept '.count($result).' result(s) for address '.$address_string.' with accuracy '.$min_accuracy);
             }
+
+
         } catch(\Exception $e){
             if($this->options->log_errors) {
                 $result->setError($e->getMessage() .(!empty($address_string) ? " ($address_string)" : ''));
@@ -75,6 +100,10 @@ class GeoPuntBEGeoProvider implements GeoProvider {
             if($this->options->log_debug){
                 $result->setLogMessage('Error: '.$e->getMessage() .(!empty($address_string) ? " ($address_string)" : ''));
             }
+        }
+
+        if($this->options->add_report) {
+            $result->setReport($this->report);
         }
 
         return $result;

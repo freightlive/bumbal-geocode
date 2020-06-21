@@ -9,6 +9,7 @@ use BumbalGeocode\Model\LatLngResult;
 use BumbalGeocode\Model\LatLngResultList;
 use BumbalGeocode\Model\GeoProviderOptions;
 use BumbalGeocode\Model\ProviderResponseCache;
+use BumbalGeocode\Model\Report;
 
 class GoogleGeoProvider implements GeoProvider
 {
@@ -25,6 +26,7 @@ class GoogleGeoProvider implements GeoProvider
     private $options;
     private $response_analyser;
     private $cache;
+    private $report;
 
     /**
      * GoogleGeoProvider constructor.
@@ -38,6 +40,7 @@ class GoogleGeoProvider implements GeoProvider
         $this->options = ($options ? $options : new GeoProviderOptions());
         $this->response_analyser = ($response_analyser ? $response_analyser : new GoogleGeoResponseAnalyser());
         $this->cache = $cache;
+        $this->report = null;
     }
 
     /**
@@ -47,6 +50,13 @@ class GoogleGeoProvider implements GeoProvider
      */
     public function getLatLngResultListForAddress(Address $address, /*float*/ $min_accuracy){
         $result = new LatLngResultList();
+
+        if($this->options->add_report) {
+            $this->report = new Report();
+            $this->report->address = $address;
+            $this->report->provider_name = self::PROVIDER_NAME;
+        }
+
         $address_string = '';
 
         try {
@@ -56,7 +66,15 @@ class GoogleGeoProvider implements GeoProvider
                 $result->setLogMessage('Google Maps API provider Geocoding invoked for address '.$address_string.' with accuracy '.$min_accuracy);
             }
 
+            if($this->options->add_report) {
+                $this->report->url = str_replace(['{{address}}', '{{apikey}}'], [urlencode($address_string), $this->api_key], self::URL);
+            }
+
             $google_result = $this->request($address_string, $result);
+
+            if($this->options->add_report) {
+                $this->report->response = $google_result;
+            }
 
             $this->validateResult($google_result);
 
@@ -67,6 +85,10 @@ class GoogleGeoProvider implements GeoProvider
 
             foreach($google_result['results'] as $single_google_result){
                 $single_result = $this->analyseResult($single_google_result, $address);
+                if($this->options->add_report) {
+                    $this->report->addLatLngResult($single_result);
+                }
+
                 if($single_result->getAccuracy() >= $min_accuracy){
                     $result->setLatLngResult($single_result);
                 }
@@ -86,6 +108,9 @@ class GoogleGeoProvider implements GeoProvider
             }
         }
 
+        if($this->options->add_report) {
+            $result->setReport($this->report);
+        }
         return $result;
     }
 
