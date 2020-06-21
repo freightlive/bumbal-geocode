@@ -35,7 +35,7 @@ Results are given an accuracy value in the range 0 to 1. They can be filtered ou
 
 `$geo_coder->getLatLngResultListFromAddress($address, $accuracy)` returns a `LatLngResultList`, which is composed of a list of `LatLngResult` (in accuracy order) and optional log and errors.
 
-Currently there are two Geocoding providers implemented in this package: Google Maps and OpenStreetMap through GraphHopper. 
+Currently there are three Geocoding providers implemented in this package: GeoPuntBE, Google Maps and OpenStreetMap through GraphHopper. 
 
 ```php
 $google_provider = new \BumbalGeocode\Providers\Google\GoogleGeoProvider('google_maps_api_key');

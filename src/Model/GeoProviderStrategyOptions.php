@@ -1,10 +1,10 @@
 <?php
 
+
 namespace BumbalGeocode\Model;
 
 
-class GeoCoderOptions {
-
+class GeoProviderStrategyOptions {
     /**
      * @var bool
      */
@@ -22,5 +22,4 @@ class GeoCoderOptions {
             }
         }
     }
-
 }

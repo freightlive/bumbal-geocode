@@ -22,6 +22,11 @@ class LatLngResultList implements Iterator, Countable, ArrayAccess {
     /**
      * @var array
      */
+    protected $reports = [];
+
+    /**
+     * @var array
+     */
     protected $lat_lng_results = [];
 
     
@@ -41,6 +46,7 @@ class LatLngResultList implements Iterator, Countable, ArrayAccess {
         $this->lat_lng_results = array_merge($this->lat_lng_results, $lat_lng_result_list->getLatLngResults());
         $this->log = array_merge($this->log, $lat_lng_result_list->getLog());
         $this->errors = array_merge($this->errors, $lat_lng_result_list->getErrors());
+        $this->reports = array_merge($this->reports, $lat_lng_result_list->getReports());
         $this->orderLatLngResults();
     }
 
@@ -116,6 +122,28 @@ class LatLngResultList implements Iterator, Countable, ArrayAccess {
     public function hasErrors(){
         return count($this->errors) > 0;
     }
+
+    /**
+     * @return bool
+     */
+    public function hasResults() {
+        return count($this->lat_lng_results) != 0;
+    }
+
+    /**
+     * @return array
+     */
+    public function getReports(){
+        return $this->reports;
+    }
+
+    /**
+     * @param Report $report
+     */
+    public function setReport(Report $report){
+        $this->reports[] = $report;
+    }
+
 
     /**
      * Order results based on accuracy

@@ -8,47 +8,69 @@ use BumbalGeocode\Model\Address;
 use BumbalGeocode\Model\LatLngResult;
 use BumbalGeocode\Model\LatLngResultList;
 use BumbalGeocode\Model\GeoProviderOptions;
+use BumbalGeocode\Model\ProviderResponseCache;
+use BumbalGeocode\Model\Report;
 
 
 class OSMGraphHopperGeoProvider implements GeoProvider {
     const URL = 'https://graphhopper.com/api/1/geocode?q={{address}}&locale=en&debug=true&key={{apikey}}';
 
-    const NOT_ISO_COUNTRY = ['DE'];
     const PROVIDER_NAME = 'graphhopper_osm';
 
     private $api_key;
     private $options;
     private $response_analyser;
 
+    private $cache;
+    private $report;
+
     /**
      * OSMGraphHopperGeoProvider constructor.
-     * @param string $api_key
+     * @param $api_key
      * @param GeoProviderOptions|NULL $options
-     * @param GeoResponseAnalyser $response_analyser
+     * @param GeoResponseAnalyser|NULL $response_analyser
+     * @param ProviderResponseCache|NULL $cache
      */
-    public function __construct(/*string*/ $api_key, GeoProviderOptions $options = NULL, GeoResponseAnalyser $response_analyser = NULL) {
+    public function __construct(/*string*/ $api_key, GeoProviderOptions $options = NULL, GeoResponseAnalyser $response_analyser = NULL, ProviderResponseCache $cache = NULL) {
         $this->api_key = $api_key;
         $this->options = ($options ? $options : new GeoProviderOptions());
         $this->response_analyser = ($response_analyser ? $response_analyser : new OSMGraphHopperGeoResponseAnalyser());
+        $this->cache = $cache;
+        $this->report = null;
     }
 
     /**
      * @param Address $address
-     * @param float $accuracy
+     * @param float $min_accuracy
      * @return LatLngResultList
      */
-    public function getLatLngResultListFromAddress(Address $address, /*float*/ $accuracy){
+    public function getLatLngResultListForAddress(Address $address, /*float*/ $min_accuracy){
         $result = new LatLngResultList();
         $address_string = '';
+
+        if($this->options->add_report) {
+            $this->report = new Report();
+            $this->report->address = $address;
+            $this->report->provider_name = self::PROVIDER_NAME;
+        }
 
         try {
             $address_string = $address->getAddressString();
 
             if($this->options->log_debug){
-                $result->setLogMessage('GraphHopper OSM provider Geocoding invoked for address '.$address_string.' with accuracy '.$accuracy);
+                $result->setLogMessage('GraphHopper OSM provider Geocoding invoked for address '.$address_string.' with accuracy '.$min_accuracy);
             }
 
-            $graphhopper_result = $this->request($address_string);
+            if($this->options->add_report) {
+                $this->report->url = str_replace('{{address}}', urlencode($address_string), self::URL);
+            }
+
+            $graphhopper_result = $this->request($address_string, $result);
+
+            if($this->options->add_report) {
+                $this->report->response = $graphhopper_result;
+            }
+
             $this->validateResult($graphhopper_result);
 
             if($this->options->log_debug){
@@ -58,13 +80,18 @@ class OSMGraphHopperGeoProvider implements GeoProvider {
 
             foreach($graphhopper_result['hits'] as $single_graphhopper_result) {
                 $single_result = $this->analyseResult($single_graphhopper_result, $address);
-                if($single_result->getAccuracy() >= $accuracy){
+
+                if($this->options->add_report) {
+                    $this->report->addLatLngResult($single_result);
+                }
+
+                if($single_result->getAccuracy() >= $min_accuracy){
                     $result->setLatLngResult($single_result);
                 }
             }
 
             if($this->options->log_debug){
-                $result->setLogMessage('GraphHopper OSM provider kept '.count($result).' result(s) for address '.$address_string.' with accuracy '.$accuracy);
+                $result->setLogMessage('GraphHopper OSM provider kept '.count($result).' result(s) for address '.$address_string.' with accuracy '.$min_accuracy);
             }
 
         } catch(\Exception $e){
@@ -75,6 +102,10 @@ class OSMGraphHopperGeoProvider implements GeoProvider {
             if($this->options->log_debug){
                 $result->setLogMessage('Error: '.$e->getMessage() .(!empty($address_string) ? " ($address_string)" : ''));
             }
+        }
+
+        if($this->options->add_report) {
+            $result->setReport($this->report);
         }
 
         return $result;
@@ -121,12 +152,24 @@ class OSMGraphHopperGeoProvider implements GeoProvider {
 
     /**
      * @param string $address_string
+     * @param LatLngResultList $result
      * @return array mixed
      * @throws \Exception
      */
-    private function request(/*string*/ $address_string) {
+    private function request(/*string*/ $address_string, LatLngResultList $result) {
         $url = str_replace(['{{address}}', '{{apikey}}'], [urlencode($address_string), $this->api_key], self::URL);
 
+        if($this->options->log_debug) {
+            $result->setLogMessage('Google Maps url requested: '.$url);
+        }
+
+        if($this->cache && $this->cache->hasProviderResponse($url)) {
+            if($this->options->log_debug) {
+                $result->setLogMessage('Google Maps response found in cache: ' . $url);
+            }
+
+            return $this->cache->getProviderResponse($url);
+        }
         $channel = curl_init();
 
         curl_setopt($channel, CURLOPT_URL, $url);
@@ -145,10 +188,11 @@ class OSMGraphHopperGeoProvider implements GeoProvider {
 
         $response_obj = json_decode($response, TRUE);
         $response_obj['code'] = $httpcode;
-        return $response_obj;
-    }
 
-    public function useForAddress(Address $address){
-        return !in_array($address->getIsoCountry(),self::NOT_ISO_COUNTRY);
+        if($this->cache) {
+            $this->cache->setProviderResponse($url, $response_obj);
+        }
+
+        return $response_obj;
     }
 }

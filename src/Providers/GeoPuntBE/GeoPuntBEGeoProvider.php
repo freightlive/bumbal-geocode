@@ -6,47 +6,68 @@ namespace BumbalGeocode\Providers\GeoPuntBE;
 use BumbalGeocode\GeoProvider;
 use BumbalGeocode\GeoResponseAnalyser;
 use BumbalGeocode\Model\GeoProviderOptions;
+use BumbalGeocode\Model\ProviderResponseCache;
 use BumbalGeocode\Model\Address;
 use BumbalGeocode\Model\LatLngResult;
 use BumbalGeocode\Model\LatLngResultList;
+use BumbalGeocode\Model\Report;
 
 
 class GeoPuntBEGeoProvider implements GeoProvider {
 
     const URL = 'https://loc.geopunt.be/geolocation/location?q={{address}}';
     const PROVIDER_NAME = 'geopunt_be';
-    const ISO_COUNTRY = 'BE';
 
     private $options;
     private $response_analyser;
+    private $cache;
+    private $report;
 
     /**
      * GeoPuntBEGeoProvider constructor.
      * @param GeoProviderOptions|NULL $options
      * @param GeoResponseAnalyser|NULL $response_analyser
+     * @param ProviderResponseCache|NULL $cache
      */
-    public function __construct(GeoProviderOptions $options = NULL, GeoResponseAnalyser $response_analyser = NULL) {
+    public function __construct(GeoProviderOptions $options = NULL, GeoResponseAnalyser $response_analyser = NULL, ProviderResponseCache $cache = NULL) {
         $this->options = ($options ? $options : new GeoProviderOptions());
         $this->response_analyser = ($response_analyser ? $response_analyser : new GeoPuntBEGeoResponseAnalyser());
+        $this->cache = $cache;
+        $this->report = null;
     }
 
     /**
      * @param Address $address
-     * @param float $accuracy
+     * @param float $min_accuracy
      * @return LatLngResultList
      */
-    public function getLatLngResultListFromAddress(Address $address, /*float*/ $accuracy){
+    public function getLatLngResultListForAddress(Address $address, /*float*/ $min_accuracy){
         $result = new LatLngResultList();
+
+        if($this->options->add_report) {
+            $this->report = new Report();
+            $this->report->address = $address;
+            $this->report->provider_name = self::PROVIDER_NAME;
+        }
+
         $address_string = '';
 
         try {
             $address_string = $address->getAddressString(true);
 
             if($this->options->log_debug){
-                $result->setLogMessage('GeoPuntBE API provider Geocoding invoked for address '.$address_string.' with accuracy '.$accuracy);
+                $result->setLogMessage('GeoPuntBE API provider Geocoding invoked for address '.$address_string.' with accuracy '.$min_accuracy);
             }
 
-            $geo_punt_be_result = $this->request($address_string);
+            if($this->options->add_report) {
+                $this->report->url = str_replace('{{address}}', urlencode($address_string), self::URL);
+            }
+
+            $geo_punt_be_result = $this->request($address_string, $result);
+
+            if($this->options->add_report) {
+                $this->report->response = $geo_punt_be_result;
+            }
             $this->validateResult($geo_punt_be_result);
 
             if($this->options->log_debug){
@@ -56,15 +77,21 @@ class GeoPuntBEGeoProvider implements GeoProvider {
 
             foreach($geo_punt_be_result['LocationResult'] as $single_geo_punt_be_result){
                 $single_result = $this->analyseResult($single_geo_punt_be_result, $address);
-                if($single_result->getAccuracy() >= $accuracy){
-                    $result->setLatLngResult($single_result);
+
+                if($this->options->add_report) {
+                    $this->report->addLatLngResult($single_result);
                 }
 
+                if($single_result->getAccuracy() >= $min_accuracy){
+                    $result->setLatLngResult($single_result);
+                }
             }
 
             if($this->options->log_debug){
-                $result->setLogMessage('GeoPuntBE provider kept '.count($result).' result(s) for address '.$address_string.' with accuracy '.$accuracy);
+                $result->setLogMessage('GeoPuntBE provider kept '.count($result).' result(s) for address '.$address_string.' with accuracy '.$min_accuracy);
             }
+
+
         } catch(\Exception $e){
             if($this->options->log_errors) {
                 $result->setError($e->getMessage() .(!empty($address_string) ? " ($address_string)" : ''));
@@ -73,6 +100,10 @@ class GeoPuntBEGeoProvider implements GeoProvider {
             if($this->options->log_debug){
                 $result->setLogMessage('Error: '.$e->getMessage() .(!empty($address_string) ? " ($address_string)" : ''));
             }
+        }
+
+        if($this->options->add_report) {
+            $result->setReport($this->report);
         }
 
         return $result;
@@ -111,11 +142,24 @@ class GeoPuntBEGeoProvider implements GeoProvider {
 
     /**
      * @param string $address_string
+     * @param LatLngResultList $result
      * @return array mixed
      * @throws \Exception
      */
-    private function request(/*string*/ $address_string) {
+    private function request(/*string*/ $address_string, LatLngResultList $result) {
         $url = str_replace('{{address}}', urlencode($address_string), self::URL);
+
+        if($this->options->log_debug) {
+            $result->setLogMessage('Google Maps url requested: '.$url);
+        }
+
+        if($this->cache && $this->cache->hasProviderResponse($url)) {
+            if($this->options->log_debug) {
+                $result->setLogMessage('Google Maps response found in cache: ' . $url);
+            }
+            return $this->cache->getProviderResponse($url);
+        }
+
         $channel = curl_init();
 
         curl_setopt($channel,CURLOPT_URL, $url);
@@ -130,10 +174,10 @@ class GeoPuntBEGeoProvider implements GeoProvider {
             throw new \Exception('GeoPuntBE API request failed. Curl returned error ' . curl_error($channel));
         }
 
-        return json_decode($response, TRUE);
-    }
-
-    public function useForAddress(Address $address){
-        return ($address->getIsoCountry() == self::ISO_COUNTRY);
+        $response_array = json_decode($response, TRUE);
+        if($this->cache) {
+            $this->cache->setProviderResponse($url, $response_array);
+        }
+        return $response_array;
     }
 }
