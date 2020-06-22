@@ -150,12 +150,12 @@ class GeoPuntBEGeoProvider implements GeoProvider {
         $url = str_replace('{{address}}', urlencode($address_string), self::URL);
 
         if($this->options->log_debug) {
-            $result->setLogMessage('Google Maps url requested: '.$url);
+            $result->setLogMessage('GeoPuntBE url requested: '.$url);
         }
 
         if($this->cache && $this->cache->hasProviderResponse($url)) {
             if($this->options->log_debug) {
-                $result->setLogMessage('Google Maps response found in cache: ' . $url);
+                $result->setLogMessage('GeoPuntBE response found in cache: ' . $url);
             }
             return $this->cache->getProviderResponse($url);
         }
