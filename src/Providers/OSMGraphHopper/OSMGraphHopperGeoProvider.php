@@ -160,12 +160,12 @@ class OSMGraphHopperGeoProvider implements GeoProvider {
         $url = str_replace(['{{address}}', '{{apikey}}'], [urlencode($address_string), $this->api_key], self::URL);
 
         if($this->options->log_debug) {
-            $result->setLogMessage('Google Maps url requested: '.$url);
+            $result->setLogMessage('GraphHopper OSM url requested: '.$url);
         }
 
         if($this->cache && $this->cache->hasProviderResponse($url)) {
             if($this->options->log_debug) {
-                $result->setLogMessage('Google Maps response found in cache: ' . $url);
+                $result->setLogMessage('GraphHopper OSM response found in cache: ' . $url);
             }
 
             return $this->cache->getProviderResponse($url);
