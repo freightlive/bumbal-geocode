@@ -165,7 +165,7 @@ class LatLngResultList implements Iterator, Countable, ArrayAccess {
      * @return LatLngResult|null
      */
     public function getBestResultFromReports(/*string*/ $provider_name) {
-        $best_accuracy = 0.0;
+        $best_accuracy = -1.0;
         $result = null;
         foreach($this->reports as $report) {
             /**
