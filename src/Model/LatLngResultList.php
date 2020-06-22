@@ -2,7 +2,6 @@
 
 namespace BumbalGeocode\Model;
 
-use BumbalGeocode\Model\LatLngResult;
 use \Countable;
 use \Iterator;
 use \ArrayAccess;
@@ -159,6 +158,36 @@ class LatLngResultList implements Iterator, Countable, ArrayAccess {
         }
 
         return null;
+    }
+
+    /**
+     * @param string $provider_name
+     * @return LatLngResult|null
+     */
+    public function getBestResultFromReports(/*string*/ $provider_name) {
+        $best_accuracy = 0.0;
+        $result = null;
+        foreach($this->reports as $report) {
+            /**
+             * @var Report $report
+             */
+            if($report->provider_name == $provider_name) {
+                /**
+                 * @var LatLngResult $report_result
+                 */
+                $report_result = $report->getBestResult();
+                if(!$report_result) {
+                    continue;
+                }
+
+                if($report_result->getAccuracy() > $best_accuracy) {
+                    $result = $report_result;
+                    $best_accuracy = $report_result->getAccuracy();
+                }
+            }
+        }
+
+        return $result;
     }
 
 
