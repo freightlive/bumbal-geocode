@@ -144,6 +144,23 @@ class LatLngResultList implements Iterator, Countable, ArrayAccess {
         $this->reports[] = $report;
     }
 
+    /**
+     * @param string $provider_name
+     * @return LatLngResult|null
+     */
+    public function getBestResult(/*string*/ $provider_name = '') {
+        foreach($this->lat_lng_results as $lat_lng_result) {
+            /**
+             * @var LatLngResult $lat_lng_result
+             */
+            if(empty($provider_name) || $lat_lng_result->getProviderName() == $provider_name) {
+                return $lat_lng_result;
+            }
+        }
+
+        return null;
+    }
+
 
     /**
      * Order results based on accuracy
@@ -158,6 +175,7 @@ class LatLngResultList implements Iterator, Countable, ArrayAccess {
             return ($a_accuracy < $b_accuracy) ? 1 : -1;
         });
     }
+
 
     function count(){
         return count($this->lat_lng_results);
